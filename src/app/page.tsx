@@ -81,45 +81,20 @@ export default function HomePage() {
     }
   }, []);
 
-  // Charger immédiatement depuis localStorage si disponible
+  // Charger immédiatement depuis l'API - PAS depuis localStorage
   const getInitialProducts = () => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('products');
-        if (cached) {
-          return JSON.parse(cached);
-        }
-      } catch (e) {}
-    }
-    return contentCache.getProducts();
+    // Toujours retourner un tableau vide pour forcer le chargement depuis l'API
+    return [];
   };
   
   const getInitialCategories = () => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('categories');
-        if (cached) {
-          const categories = JSON.parse(cached);
-          return ['Toutes les catégories', ...categories.map((c: any) => c.name)];
-        }
-      } catch (e) {}
-    }
-    const cached = contentCache.getCategories();
-    return cached.length > 0 ? ['Toutes les catégories', ...cached.map((c: any) => c.name)] : ['Toutes les catégories'];
+    // Toujours retourner les catégories par défaut pour forcer le chargement depuis l'API
+    return ['Toutes les catégories'];
   };
   
   const getInitialFarms = () => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('farms');
-        if (cached) {
-          const farms = JSON.parse(cached);
-          return ['Toutes les farms', ...farms.map((f: any) => f.name)];
-        }
-      } catch (e) {}
-    }
-    const cached = contentCache.getFarms();
-    return cached.length > 0 ? ['Toutes les farms', ...cached.map((f: any) => f.name)] : ['Toutes les farms'];
+    // Toujours retourner les farms par défaut pour forcer le chargement depuis l'API
+    return ['Toutes les farms'];
   };
   
   const [products, setProducts] = useState<Product[]>(getInitialProducts());
@@ -191,6 +166,31 @@ export default function HomePage() {
     return () => {
       clearTimeout(loadingTimeout);
       clearInterval(interval);
+    };
+  }, []);
+
+  // Écouter les mises à jour du cache
+  useEffect(() => {
+    const handleCacheUpdate = (event: CustomEvent) => {
+      const { products: newProducts, categories: newCategories, farms: newFarms } = event.detail;
+      
+      if (newProducts) {
+        setProducts(newProducts);
+      }
+      
+      if (newCategories) {
+        setCategories(['Toutes les catégories', ...newCategories.map((c: any) => c.name)]);
+      }
+      
+      if (newFarms) {
+        setFarms(['Toutes les farms', ...newFarms.map((f: any) => f.name)]);
+      }
+    };
+    
+    window.addEventListener('cacheUpdated', handleCacheUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('cacheUpdated', handleCacheUpdate as EventListener);
     };
   }, []);
 

@@ -16,177 +16,50 @@ interface CachedData {
 class ContentCache {
   private data: any = {};
   private lastUpdate: number = 0;
-  private cacheDuration: number = 1000; // 1 seconde pour synchronisation instantanée
-  private isRefreshing: boolean = false; // Éviter les refresh simultanés
+  private cacheDuration: number = 500; // 0.5 seconde pour synchronisation ultra rapide
+  private isRefreshing: boolean = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
-      this.loadFromLocalStorage();
-      this.loadAllFromLocalStorage(); // Charger tout depuis localStorage
-      // Refresh moins fréquent et avec protection
-      setInterval(() => this.refreshIfNeeded(), 1000); // Toutes les secondes pour synchronisation instantanée
+      // Charger immédiatement depuis l'API
+      this.forceRefresh();
+      // Rafraîchir très fréquemment
+      setInterval(() => this.forceRefresh(), 500); // Toutes les 0.5 secondes
     }
   }
   
-  private loadAllFromLocalStorage() {
-    try {
-      // Charger les produits
-      const productsCache = localStorage.getItem('products');
-      if (productsCache) {
-        this.data.products = JSON.parse(productsCache);
-      }
-      
-      // Charger les catégories
-      const categoriesCache = localStorage.getItem('categories');
-      if (categoriesCache) {
-        this.data.categories = JSON.parse(categoriesCache);
-      }
-      
-      // Charger les farms
-      const farmsCache = localStorage.getItem('farms');
-      if (farmsCache) {
-        this.data.farms = JSON.parse(farmsCache);
-      }
-      
-      // Charger les settings
-      const settingsCache = localStorage.getItem('shopSettings');
-      if (settingsCache) {
-        this.data.settings = JSON.parse(settingsCache);
-      }
-      
-      // Charger les réseaux sociaux
-      const socialCache = localStorage.getItem('socialLinks');
-      if (socialCache) {
-        this.data.socialLinks = JSON.parse(socialCache);
-      }
-    } catch (error) {
-      console.log('Erreur chargement localStorage:', error);
-    }
-  }
-
-  private loadFromLocalStorage() {
-    try {
-      const cached = localStorage.getItem('contentCache');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        this.data = parsed.data || {};
-        this.lastUpdate = parsed.timestamp || 0;
-      }
-    } catch (error) {
-      console.log('📱 Cache localStorage non disponible');
-    }
-  }
-
-  private saveToLocalStorage() {
-    try {
-      localStorage.setItem('contentCache', JSON.stringify({
-        data: this.data,
-        timestamp: this.lastUpdate
-      }));
-    } catch (error) {
-      // Storage non disponible
-    }
-  }
-
-  private async refreshIfNeeded() {
-    const now = Date.now();
-    // Éviter les refresh trop fréquents et simultanés
-    if (!this.isRefreshing && now - this.lastUpdate > this.cacheDuration) {
-      await this.refresh();
-    }
-  }
-
-  async initialize() {
-    // Ne pas forcer le refresh si les données sont récentes
-    if (!this.data.settings && Date.now() - this.lastUpdate > 60000) {
-      await this.refresh();
-    }
-  }
-
-  async refresh() {
-    // Éviter les refresh simultanés
+  private async forceRefresh() {
     if (this.isRefreshing) return;
-    
     this.isRefreshing = true;
     
     try {
-      // Charger toutes les données en parallèle
-      const [settingsRes, productsRes, categoriesRes, farmsRes, infoRes, contactRes] = await Promise.all([
-        fetch('/api/settings').catch(() => null),
-        fetch('/api/products').catch(() => null),
-        fetch('/api/categories').catch(() => null),
-        fetch('/api/farms').catch(() => null),
-        fetch('/api/pages/info').catch(() => null),
-        fetch('/api/pages/contact').catch(() => null)
+      // Charger TOUT depuis l'API en parallèle
+      const [products, categories, farms, settings, socialLinks] = await Promise.all([
+        fetch('/api/products', { cache: 'no-store' }).then(r => r.ok ? r.json() : []),
+        fetch('/api/categories', { cache: 'no-store' }).then(r => r.ok ? r.json() : []),
+        fetch('/api/farms', { cache: 'no-store' }).then(r => r.ok ? r.json() : []),
+        fetch('/api/settings', { cache: 'no-store' }).then(r => r.ok ? r.json() : {}),
+        fetch('/api/social-links', { cache: 'no-store' }).then(r => r.ok ? r.json() : [])
       ]);
-
-      if (settingsRes?.ok) {
-        this.data.settings = await settingsRes.json();
-      }
-
-      if (productsRes?.ok) {
-        this.data.products = await productsRes.json();
-      }
-
-      if (categoriesRes?.ok) {
-        this.data.categories = await categoriesRes.json();
-      }
-
-      if (farmsRes?.ok) {
-        this.data.farms = await farmsRes.json();
-      }
-
-      // Ajouter les pages au cache
-      if (!this.data.pages) {
-        this.data.pages = {};
-      }
-
-      if (infoRes?.ok) {
-        const infoData = await infoRes.json();
-        this.data.pages.info = {
-          title: infoData.title || 'Page Info',
-          content: infoData.content || ''
-        };
-      }
-
-      if (contactRes?.ok) {
-        const contactData = await contactRes.json();
-        this.data.pages.contact = {
-          title: contactData.title || 'Page Contact',
-          content: contactData.content || ''
-        };
-      }
-
-      this.lastUpdate = Date.now();
-      this.saveToLocalStorage();
       
-      console.log('✅ Cache rafraîchi:', {
-        settings: !!this.data.settings,
-        products: this.data.products?.length || 0,
-        categories: this.data.categories?.length || 0,
-        farms: this.data.farms?.length || 0,
-        infoPage: !!this.data.pages?.info,
-        contactPage: !!this.data.pages?.contact
-      });
+      // Mettre à jour le cache ET localStorage
+      this.data = { products, categories, farms, settings, socialLinks };
+      
+      // Sauvegarder dans localStorage pour affichage instantané
+      localStorage.setItem('products', JSON.stringify(products));
+      localStorage.setItem('categories', JSON.stringify(categories));
+      localStorage.setItem('farms', JSON.stringify(farms));
+      localStorage.setItem('shopSettings', JSON.stringify(settings));
+      localStorage.setItem('socialLinks', JSON.stringify(socialLinks));
+      
+      // Émettre un événement pour notifier les composants
+      window.dispatchEvent(new CustomEvent('cacheUpdated', { detail: this.data }));
+      
     } catch (error) {
-      console.error('❌ Erreur refresh cache:', error);
+      console.log('Erreur refresh cache:', error);
     } finally {
       this.isRefreshing = false;
     }
-  }
-
-  // Force refresh - utilisé après une sauvegarde
-  async forceRefresh() {
-    console.log('🔄 FORCE REFRESH - Récupération immédiate des données admin...');
-    this.lastUpdate = 0; // Force un refresh
-    await this.refresh(); // Utiliser refresh au lieu de refreshAll
-  }
-
-  // Nouvelle méthode pour rafraîchir tout immédiatement
-  async refreshAll() {
-    console.log('🔄 REFRESH ALL - Synchronisation complète...');
-    this.invalidate(); // Vider le cache
-    await this.refresh(); // Recharger tout
   }
 
   // Obtenir les settings instantanément - TOUJOURS depuis l'API admin
@@ -240,7 +113,10 @@ class ContentCache {
       this.data.pages = {};
     }
     this.data.pages.info = page;
-    this.saveToLocalStorage();
+    // Sauvegarder aussi dans localStorage séparément pour chargement instantané
+    try {
+      localStorage.setItem('infoPage', JSON.stringify(page));
+    } catch (e) {}
   }
 
   updateContactPage(page: { title: string; content: string }) {
@@ -248,19 +124,24 @@ class ContentCache {
       this.data.pages = {};
     }
     this.data.pages.contact = page;
-    this.saveToLocalStorage();
+    // Sauvegarder aussi dans localStorage séparément pour chargement instantané
+    try {
+      localStorage.setItem('contactPage', JSON.stringify(page));
+    } catch (e) {}
   }
 
 
 
   updateSettings(settings: any) {
     this.data.settings = settings;
-    this.saveToLocalStorage();
+    // Sauvegarder aussi dans localStorage séparément pour chargement instantané
+    try {
+      localStorage.setItem('shopSettings', JSON.stringify(settings));
+    } catch (e) {}
   }
 
   updateProducts(products: any[]) {
     this.data.products = products;
-    this.saveToLocalStorage();
     // Sauvegarder aussi dans localStorage séparément pour chargement instantané
     try {
       localStorage.setItem('products', JSON.stringify(products));
@@ -269,7 +150,6 @@ class ContentCache {
 
   updateCategories(categories: any[]) {
     this.data.categories = categories;
-    this.saveToLocalStorage();
     // Sauvegarder aussi dans localStorage séparément pour chargement instantané
     try {
       localStorage.setItem('categories', JSON.stringify(categories));
@@ -278,7 +158,6 @@ class ContentCache {
 
   updateFarms(farms: any[]) {
     this.data.farms = farms;
-    this.saveToLocalStorage();
     // Sauvegarder aussi dans localStorage séparément pour chargement instantané
     try {
       localStorage.setItem('farms', JSON.stringify(farms));
