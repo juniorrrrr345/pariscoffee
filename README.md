@@ -1,8 +1,14 @@
 # JBEL INDUSTRY Shop - Boutique E-commerce Moderne
 
-<!-- Deploy: 2025-01-29 19:47 - Force redeploy with all features -->
+<!-- Deploy: 2025-01-29 20:16 - NOUVEAU CHARGEMENT MODERNE ACTIVÉ -->
 
 Une boutique e-commerce moderne et élégante avec panel d'administration complet.
+
+## 🚀 Nouveau Chargement Moderne
+- Logo animé ⚡
+- Titre "JBEL INDUSTRY"
+- Barre de progression colorée
+- Fond sans écran noir
 
 ## ✨ Fonctionnalités
 
