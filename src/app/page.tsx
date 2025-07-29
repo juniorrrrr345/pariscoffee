@@ -35,6 +35,13 @@ export default function HomePage() {
     return false;
   });
   
+  // S'assurer que hasVisited reste en sessionStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !loading) {
+      sessionStorage.setItem('hasVisited', 'true');
+    }
+  }, [loading]);
+  
   // Charger le thème depuis l'API au démarrage
   useEffect(() => {
     const loadThemeForNewVisitors = async () => {

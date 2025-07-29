@@ -48,9 +48,14 @@ interface BottomNavProps {
 
 export default function BottomNav({ activeTab = 'menu', onTabChange }: BottomNavProps) {
   const handleTabClick = (tabId: string) => {
-    if (onTabChange) {
+    // Pour Menu, on appelle directement onTabChange sans navigation
+    if (tabId === 'menu') {
       onTabChange(tabId);
+      return;
     }
+    
+    // Pour les autres tabs, on utilise onTabChange qui gère la navigation
+    onTabChange(tabId);
   };
 
   return (
