@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
-
-import GlobalBackgroundProvider from '@/components/GlobalBackgroundProvider';
+import BottomNav from '@/components/BottomNav';
 
 interface SocialLink {
   _id: string;
@@ -27,6 +26,7 @@ export default function SocialPage() {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('social');
 
   useEffect(() => {
     loadData();
@@ -57,105 +57,119 @@ export default function SocialPage() {
     }
   };
 
+  const handleTabChange = (tabId: string) => {
+    if (tabId === 'menu') {
+      window.location.href = '/';
+    } else if (tabId === 'infos') {
+      window.location.href = '/info';
+    } else if (tabId === 'contact') {
+      window.location.href = '/contact';
+    }
+  };
+
+  // Structure cohérente avec la boutique principale
   return (
-    <div className="min-h-screen bg-black relative">
-      <GlobalBackgroundProvider />
-      <div className="relative z-10">
+    <div className="main-container">
+      {/* Overlay global toujours présent */}
+      <div className="global-overlay"></div>
+      
+      {/* Contenu principal */}
+      <div className="content-layer">
         <Header />
         
-        <main className="container mx-auto px-4 py-8 mt-20 sm:mt-24 lg:mt-28">
-          {/* Titre de la page avec style boutique */}
-          <div className="text-center mb-12">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4">
-              Restez Connectés
-            </h1>
-            <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto mb-6"></div>
-            <p className="text-gray-300 text-lg sm:text-xl max-w-2xl mx-auto">
-              Suivez {settings?.shopTitle || 'notre boutique'} sur les réseaux sociaux pour ne rien manquer de nos nouveautés et offres exclusives
-            </p>
-          </div>
+        <div className="pt-12 sm:pt-14">
+          <div className="h-4 sm:h-6"></div>
+          
+          <main className="pt-4 pb-24 sm:pb-28 px-3 sm:px-4 lg:px-6 xl:px-8 max-w-7xl mx-auto">
+            {/* Titre de la page avec style boutique */}
+            <div className="text-center mb-8 sm:mb-12">
+              <h1 className="shop-title text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white mb-3">
+                Nos Réseaux
+              </h1>
+              <div className="w-20 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto mb-4"></div>
+              <p className="text-gray-300 text-sm sm:text-base max-w-xl mx-auto px-4">
+                Suivez {settings?.shopTitle || 'notre boutique'} pour ne rien manquer
+              </p>
+            </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-          </div>
-        ) : socialLinks.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {socialLinks.map((link) => (
-              <a
-                key={link._id}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative overflow-hidden rounded-2xl transition-all duration-300 transform hover:scale-105"
-                style={{
-                  backgroundColor: `${link.color}20`,
-                  borderColor: link.color,
-                  borderWidth: '2px',
-                  borderStyle: 'solid'
-                }}
-              >
-                {/* Effet de hover */}
-                <div 
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{
-                    background: `linear-gradient(45deg, ${link.color}40, transparent)`
-                  }}
-                />
-                
-                <div className="relative p-8 text-center">
-                  {/* Icône */}
-                  <div className="text-5xl mb-4">{link.icon}</div>
-                  
-                  {/* Nom du réseau */}
-                  <h3 className="text-xl font-bold text-white mb-2">
-                    {link.name}
-                  </h3>
-                  
-                  {/* Bouton */}
-                  <div 
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all"
-                    style={{
-                      backgroundColor: link.color,
-                      color: 'white'
-                    }}
-                  >
-                    <span>Suivre</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
+            {loading ? (
+              // Écran de chargement cohérent avec la boutique
+              <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6">
+                    <div className="absolute inset-0 border-4 border-white/20 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
                   </div>
+                  <h2 className="shop-title text-xl sm:text-2xl font-bold text-white mb-2">
+                    {settings?.shopTitle || 'JBEL INDUSTRY'}
+                  </h2>
+                  <p className="text-gray-400 text-sm animate-pulse">
+                    {settings?.loadingText || 'Chargement...'}
+                  </p>
                 </div>
-              </a>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20">
-            <p className="text-gray-400 text-lg">
-              Aucun réseau social configuré pour le moment.
-            </p>
-          </div>
-        )}
+              </div>
+            ) : socialLinks.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                {socialLinks.map((link) => (
+                  <a
+                    key={link._id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative overflow-hidden rounded-xl transition-all duration-300 transform hover:scale-105 bg-gray-900/50 backdrop-blur-sm border border-white/10 hover:border-white/20"
+                  >
+                    {/* Effet de hover */}
+                    <div 
+                      className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
+                      style={{
+                        background: `linear-gradient(135deg, ${link.color}, transparent)`
+                      }}
+                    />
+                    
+                    <div className="relative p-4 sm:p-6 text-center">
+                      {/* Icône */}
+                      <div className="text-2xl sm:text-3xl mb-2">{link.icon}</div>
+                      
+                      {/* Nom du réseau */}
+                      <h3 className="text-sm sm:text-base font-semibold text-white mb-2 truncate">
+                        {link.name}
+                      </h3>
+                      
+                      {/* Petit indicateur de couleur */}
+                      <div 
+                        className="w-8 h-1 mx-auto rounded-full"
+                        style={{ backgroundColor: link.color }}
+                      />
+                    </div>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <p className="text-gray-400">
+                  Aucun réseau social configuré pour le moment.
+                </p>
+              </div>
+            )}
 
-        {/* Section contact supplémentaire */}
-        <div className="mt-16 text-center">
-          <div className="inline-block p-8 bg-gray-900 rounded-2xl border border-gray-800">
-            <h2 className="text-2xl font-bold text-white mb-4">
-              Besoin d'aide ?
-            </h2>
-            <p className="text-gray-400 mb-6">
-              N'hésitez pas à nous contacter directement
-            </p>
-            <Link
-              href="/contact"
-              className="inline-block bg-white text-black font-bold py-3 px-6 rounded-lg hover:bg-gray-200 transition-all duration-300"
-            >
-              Nous contacter
-            </Link>
-          </div>
+            {/* Section contact plus discrète */}
+            <div className="mt-12 text-center">
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+              >
+                <span>Besoin d'aide ?</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </main>
         </div>
-        </main>
       </div>
+      
+      {/* BottomNav toujours visible */}
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
     </div>
   );
 }

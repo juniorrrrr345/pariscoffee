@@ -144,22 +144,14 @@ export default function ContactPage({ onClose }: ContactPageProps) {
   };
 
   return (
-    <div className="min-h-screen overflow-y-auto">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        
-        {/* Header avec bouton retour */}
-        <div className="flex items-center justify-between mb-8">
-          <button
-            onClick={onClose}
-            className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full backdrop-blur-sm transition-all duration-200 flex items-center justify-center"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">Contact</h1>
-          <div className="w-12"></div>
-        </div>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {/* Titre de la page avec style boutique */}
+      <div className="text-center mb-8">
+        <h1 className="shop-title text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white mb-3">
+          Contact
+        </h1>
+        <div className="w-20 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto"></div>
+      </div>
 
         {/* Contenu principal - Affichage instantané */}
         <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-white/10 mb-8">
@@ -190,7 +182,6 @@ export default function ContactPage({ onClose }: ContactPageProps) {
           </div>
         )}
 
-      </div>
     </div>
   );
 }
