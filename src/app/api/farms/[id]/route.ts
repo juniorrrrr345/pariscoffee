@@ -1,23 +1,25 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb-runtime';
-import Farm from '@/models/Farm';
+import { connectToDatabase } from '@/lib/mongodb-fixed';
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
-    await connectDB();
-    const data = await request.json();
+    const { db } = await connectToDatabase();
+    const farmsCollection = db.collection('farms');
     
-    const farm = await Farm.findByIdAndUpdate(
-      params.id,
-      { ...data, updatedAt: new Date() },
-      { new: true }
+    const data = await request.json();
+    const { ObjectId } = require('mongodb');
+    
+    const result = await farmsCollection.findOneAndUpdate(
+      { _id: new ObjectId(params.id) },
+      { $set: { ...data, updatedAt: new Date() } },
+      { returnDocument: 'after' }
     );
 
-    if (!farm) {
+    if (!result.value) {
       return NextResponse.json({ error: 'Farm non trouvée' }, { status: 404 });
     }
 
-    return NextResponse.json(farm);
+    return NextResponse.json(result.value);
   } catch (error) {
     console.error('Erreur lors de la modification:', error);
     return NextResponse.json({ error: 'Erreur lors de la modification' }, { status: 500 });
@@ -26,11 +28,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
-    await connectDB();
+    const { db } = await connectToDatabase();
+    const farmsCollection = db.collection('farms');
     
-    const farm = await Farm.findByIdAndDelete(params.id);
+    const { ObjectId } = require('mongodb');
+    const result = await farmsCollection.findOneAndDelete({ _id: new ObjectId(params.id) });
 
-    if (!farm) {
+    if (!result.value) {
       return NextResponse.json({ error: 'Farm non trouvée' }, { status: 404 });
     }
 
