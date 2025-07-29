@@ -176,7 +176,7 @@ export default function HomePage() {
     // Cacher le chargement après un délai plus long pour être sûr qu'il soit visible
     const loadingTimeout = setTimeout(() => {
       setLoading(false);
-    }, 3000); // 3 secondes pour bien voir le nouveau design
+    }, 5000); // 5 secondes pour bien voir le chargement
     
     // Rafraîchir les données toutes les secondes pour synchronisation temps réel
     const interval = setInterval(() => {
