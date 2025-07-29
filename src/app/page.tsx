@@ -15,23 +15,43 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState('menu');
   const router = useRouter();
   
-  // Remettre le chargement initial
-  const [loading, setLoading] = useState(true);
+  // Précharger les autres pages pour navigation instantanée
+  useEffect(() => {
+    router.prefetch('/info');
+    router.prefetch('/contact');
+    router.prefetch('/social');
+  }, [router]);
   
-  // États pour les données
+  // États pour les données - Initialiser avec des valeurs par défaut
+  const [loading, setLoading] = useState(false); // Pas de chargement par défaut
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(['Toutes les catégories']);
   const [farms, setFarms] = useState<string[]>(['Toutes les farms']);
 
-  // CHARGEMENT INITIAL SIMPLIFIÉ
+  // CHARGEMENT INSTANTANÉ DEPUIS LE CACHE
   useEffect(() => {
-    const loadData = async () => {
+    // 1. D'abord charger depuis le cache pour affichage immédiat
+    const cachedProducts = contentCache.getProducts();
+    const cachedCategories = contentCache.getCategories();
+    const cachedFarms = contentCache.getFarms();
+    
+    if (cachedProducts.length > 0) {
+      setProducts(cachedProducts);
+    }
+    if (cachedCategories.length > 0) {
+      setCategories(['Toutes les catégories', ...cachedCategories.map((c: any) => c.name)]);
+    }
+    if (cachedFarms.length > 0) {
+      setFarms(['Toutes les farms', ...cachedFarms.map((f: any) => f.name)]);
+    }
+    
+    // 2. Charger les données fraîches en arrière-plan
+    const loadFreshData = async () => {
       try {
-        // Charger toutes les données en parallèle sans le cache.initialize()
         const [productsRes, categoriesRes, farmsRes] = await Promise.all([
-          fetch('/api/products').catch(() => ({ ok: false })),
-          fetch('/api/categories').catch(() => ({ ok: false })),
-          fetch('/api/farms').catch(() => ({ ok: false }))
+          fetch('/api/products', { cache: 'no-store' }),
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/farms', { cache: 'no-store' })
         ]);
 
         if (productsRes.ok) {
@@ -52,53 +72,21 @@ export default function HomePage() {
           contentCache.updateFarms(farmsData);
         }
       } catch (error) {
-        console.error('Erreur chargement:', error);
-        // Utiliser les données du cache en cas d'erreur
-        try {
-          const cachedProducts = contentCache.getProducts();
-          const cachedCategories = contentCache.getCategories();
-          const cachedFarms = contentCache.getFarms();
-          
-          if (cachedProducts && cachedProducts.length > 0) {
-            setProducts(cachedProducts);
-          }
-          if (cachedCategories && cachedCategories.length > 0) {
-            setCategories(['Toutes les catégories', ...cachedCategories.map((c: any) => c.name)]);
-          }
-          if (cachedFarms && cachedFarms.length > 0) {
-            setFarms(['Toutes les farms', ...cachedFarms.map((f: any) => f.name)]);
-          }
-        } catch (cacheError) {
-          console.error('Erreur cache:', cacheError);
-        }
-      } finally {
-        // Toujours arrêter le chargement après le traitement
-        setTimeout(() => setLoading(false), 800);
+        console.error('Erreur chargement données fraîches:', error);
       }
     };
     
-    loadData();
+    loadFreshData();
     
-    // Timeout de sécurité pour éviter le chargement infini
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn('⚠️ Chargement trop long, forçage de l\'arrêt');
-        setLoading(false);
-      }
-    }, 5000); // 5 secondes max
-    
-    // Rafraîchir les données toutes les 2 secondes pour synchronisation instantanée
+    // Rafraîchir les données toutes les 2 secondes pour synchronisation
     const interval = setInterval(() => {
-      if (!loading) { // Ne pas rafraîchir pendant le chargement initial
-        loadData();
-      }
+      loadFreshData();
     }, 2000);
     
     return () => {
       clearInterval(interval);
-      clearTimeout(timeout);
     };
-  }, [loading]);
+  }, []);
 
   // Filtrage des produits
   const filteredProducts = products.filter(product => {
@@ -122,67 +110,7 @@ export default function HomePage() {
     }
   };
 
-  // Écran de chargement initial avec fond
-  if (loading) {
-    return (
-      <div className="main-container">
-        <div className="global-overlay"></div>
-        <div className="content-layer">
-          <div className="flex items-center justify-center min-h-screen p-4">
-            <div className="text-center max-w-md w-full">
-              {/* Container avec fond semi-transparent pour meilleure visibilité */}
-              <div className="bg-black/70 backdrop-blur-md rounded-2xl p-8 sm:p-10 md:p-12 border border-white/20 shadow-2xl">
-                {/* Logo ou titre avec effet néon */}
-                <div className="relative mb-8">
-                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-gradient">
-                    JBEL INDUSTRY
-                  </h1>
-                  <div className="absolute inset-0 blur-xl bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 opacity-50 animate-pulse"></div>
-                </div>
-                
-                {/* Nouveau spinner moderne */}
-                <div className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 mx-auto mb-8">
-                  <div className="absolute inset-0">
-                    <div className="w-full h-full border-4 border-transparent border-t-blue-500 border-r-purple-500 rounded-full animate-spin"></div>
-                  </div>
-                  <div className="absolute inset-2">
-                    <div className="w-full h-full border-4 border-transparent border-b-pink-500 border-l-cyan-500 rounded-full animate-spin-reverse"></div>
-                  </div>
-                  <div className="absolute inset-4">
-                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 rounded-full animate-pulse"></div>
-                  </div>
-                </div>
-                
-                {/* Indicateur de chargement moderne */}
-                <div className="space-y-4 mb-6">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                  </div>
-                  
-                  {/* Texte de chargement dynamique */}
-                  <div className="text-white text-lg font-semibold">
-                    <span className="animate-pulse">Initialisation de la boutique</span>
-                  </div>
-                </div>
-                
-                {/* Message de chargement avec icône */}
-                <div className="flex items-center justify-center gap-2 text-white/70 text-sm">
-                  <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  <span>Connexion aux services...</span>
-                </div>
-              </div>
-              
 
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Structure avec fond toujours visible
   return (
