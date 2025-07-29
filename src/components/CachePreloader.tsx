@@ -1,21 +1,45 @@
 'use client';
+
 import { useEffect } from 'react';
-import contentCache from '@/lib/contentCache';
 
 export default function CachePreloader() {
   useEffect(() => {
-    // Précharger le cache dès que l'app se charge
-    const preloadCache = async () => {
+    // Précharger toutes les données importantes en arrière-plan
+    const preloadData = async () => {
       try {
-        await contentCache.initialize();
-        console.log('🚀 Cache préchargé avec succès');
+        // Charger les données en parallèle
+        const promises = [
+          fetch('/api/products', { cache: 'no-store' }),
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/farms', { cache: 'no-store' }),
+          fetch('/api/settings', { cache: 'no-store' }),
+          fetch('/api/social-links', { cache: 'no-store' }),
+          fetch('/api/pages/info', { cache: 'no-store' }),
+          fetch('/api/pages/contact', { cache: 'no-store' })
+        ];
+
+        const results = await Promise.allSettled(promises);
+        
+        // Sauvegarder les réseaux sociaux dans localStorage
+        const socialLinksResult = results[4];
+        if (socialLinksResult.status === 'fulfilled' && socialLinksResult.value.ok) {
+          const socialLinks = await socialLinksResult.value.json();
+          localStorage.setItem('socialLinks', JSON.stringify(socialLinks));
+        }
+        
+        console.log('✅ Données préchargées avec succès');
       } catch (error) {
-        console.error('❌ Erreur préchargement cache:', error);
+        console.error('Erreur préchargement:', error);
       }
     };
-    
-    preloadCache();
+
+    // Lancer le préchargement après un court délai pour ne pas bloquer le rendu initial
+    const timeout = setTimeout(() => {
+      preloadData();
+    }, 100);
+
+    return () => clearTimeout(timeout);
   }, []);
 
-  return null; // Composant invisible
+  return null;
 }

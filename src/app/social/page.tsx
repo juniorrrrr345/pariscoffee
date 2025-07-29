@@ -24,35 +24,59 @@ interface Settings {
 }
 
 export default function SocialPage() {
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
-  const [settings, setSettings] = useState<Settings | null>(null);
+  // Initialiser avec les données du localStorage si disponibles
+  const getCachedData = () => {
+    try {
+      const cachedSocial = localStorage.getItem('socialLinks');
+      const cachedSettings = localStorage.getItem('shopSettings');
+      
+      return {
+        socialLinks: cachedSocial ? JSON.parse(cachedSocial).filter((link: SocialLink) => link.isActive) : [],
+        settings: cachedSettings ? JSON.parse(cachedSettings) : null
+      };
+    } catch (e) {
+      return { socialLinks: [], settings: null };
+    }
+  };
+  
+  const cached = getCachedData();
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(cached.socialLinks);
+  const [settings, setSettings] = useState<Settings | null>(cached.settings);
   const [activeTab, setActiveTab] = useState('social');
   const router = useRouter();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    // Précharger les autres pages
+    router.prefetch('/');
+    router.prefetch('/info');
+    router.prefetch('/contact');
+    
+    // Charger les données fraîches en arrière-plan
+    loadFreshData();
+  }, [router]);
 
-  const loadData = async () => {
+  const loadFreshData = async () => {
     try {
-      // Charger les réseaux sociaux et les settings en parallèle
       const [socialResponse, settingsResponse] = await Promise.all([
-        fetch('/api/social-links'),
-        fetch('/api/settings')
+        fetch('/api/social-links', { cache: 'no-store' }),
+        fetch('/api/settings', { cache: 'no-store' })
       ]);
 
       if (socialResponse.ok) {
         const data = await socialResponse.json();
         const activeLinks = data.filter((link: SocialLink) => link.isActive);
         setSocialLinks(activeLinks);
+        // Sauvegarder dans le cache
+        localStorage.setItem('socialLinks', JSON.stringify(data));
       }
 
       if (settingsResponse.ok) {
         const settingsData = await settingsResponse.json();
         setSettings(settingsData);
+        // Déjà sauvegardé par GlobalBackgroundProvider
       }
     } catch (error) {
-      console.error('Erreur chargement données:', error);
+      console.error('Erreur chargement données fraîches:', error);
     }
   };
 

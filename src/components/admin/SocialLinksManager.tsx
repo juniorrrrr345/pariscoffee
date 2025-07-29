@@ -34,9 +34,11 @@ export default function SocialLinksManager() {
       if (response.ok) {
         const data = await response.json();
         setSocialLinks(data);
+        // Sauvegarder dans localStorage pour chargement instantané
+        localStorage.setItem('socialLinks', JSON.stringify(data));
       }
     } catch (error) {
-      console.error('Erreur lors du chargement:', error);
+      console.error('Erreur chargement liens sociaux:', error);
     } finally {
       setLoading(false);
     }
@@ -95,8 +97,18 @@ export default function SocialLinksManager() {
           successMsg.remove();
         }, 3000);
         
-        setShowModal(false);
-        loadSocialLinks();
+                  setShowModal(false);
+          
+          // Invalider le cache après la sauvegarde
+          try {
+            await fetch('/api/cache/invalidate', { method: 'POST' });
+          } catch (error) {
+            console.error('Erreur invalidation cache:', error);
+          }
+          
+          // Recharger les données
+          loadSocialLinks();
+
       } else {
         const error = await response.json();
         alert(`Erreur: ${error.error || 'Erreur lors de la sauvegarde'}`);
