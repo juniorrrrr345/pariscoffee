@@ -23,8 +23,7 @@ export async function POST() {
         backgroundBlur: 5,
         telegramLink: '',
         canalLink: '',
-        deliveryInfo: '',
-        qualityInfo: '',
+
         email: '',
         address: 'France',
         updatedAt: new Date()

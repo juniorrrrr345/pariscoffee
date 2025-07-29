@@ -39,7 +39,7 @@ export default function CategoryFilter({
   }, []);
 
   return (
-    <div className="sticky top-0 z-30 bg-black/95 backdrop-blur-md border-b border-white/10 pt-2 sm:pt-3">
+    <div className="sticky top-0 z-30 bg-black/40 backdrop-blur-lg border-b border-white/10 pt-2 sm:pt-3">
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-4 sm:p-5 max-w-7xl mx-auto">
         {/* Dropdown Catégories - Design premium */}
         <div className="relative flex-1" ref={categoryRef}>
@@ -48,7 +48,7 @@ export default function CategoryFilter({
               setShowCategories(!showCategories);
               setShowFarms(false);
             }}
-            className="w-full bg-black/60 hover:bg-black/80 border border-white/20 hover:border-white/30 text-white py-2.5 sm:py-3 lg:py-3.5 px-3 sm:px-4 lg:px-5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-medium sm:font-semibold transition-all duration-300 flex items-center justify-between backdrop-blur-sm group"
+                          className="w-full bg-black/30 hover:bg-black/50 border border-white/20 hover:border-white/30 text-white py-2.5 sm:py-3 lg:py-3.5 px-3 sm:px-4 lg:px-5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-medium sm:font-semibold transition-all duration-300 flex items-center justify-between backdrop-blur-md group"
           >
                           <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-md sm:rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-blue-500/50 transition-all">
@@ -110,7 +110,7 @@ export default function CategoryFilter({
               setShowFarms(!showFarms);
               setShowCategories(false);
             }}
-            className="w-full bg-gradient-to-r from-green-600/20 to-emerald-600/20 hover:from-green-600/30 hover:to-emerald-600/30 border border-green-500/30 hover:border-green-500/50 text-white py-2.5 sm:py-3 lg:py-3.5 px-3 sm:px-4 lg:px-5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-medium sm:font-semibold transition-all duration-300 flex items-center justify-between shadow-xl hover:shadow-green-500/20 transform hover:scale-[1.02] backdrop-blur-md group"
+            className="w-full bg-black/30 hover:bg-black/50 border border-white/20 hover:border-white/30 text-white py-2.5 sm:py-3 lg:py-3.5 px-3 sm:px-4 lg:px-5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-medium sm:font-semibold transition-all duration-300 flex items-center justify-between backdrop-blur-md group"
           >
                           <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-md sm:rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-green-500/50 transition-all">

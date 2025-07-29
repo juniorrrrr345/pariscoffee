@@ -22,8 +22,7 @@ export async function POST() {
         backgroundBlur: 5,
         telegramLink: '',
         canalLink: '',
-        deliveryInfo: '',
-        qualityInfo: '',
+
         updatedAt: new Date()
       },
       { upsert: true } // Créer si n'existe pas

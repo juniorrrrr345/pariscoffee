@@ -7,8 +7,7 @@ interface Settings {
   bannerText: string;
   loadingText: string;
   whatsappLink: string;
-  deliveryInfo: string;
-  qualityInfo: string;
+
   titleStyle: string;
   backgroundImage: string;
   backgroundOpacity: number;
@@ -23,8 +22,7 @@ export default function SettingsManager() {
     bannerText: '',
     loadingText: '',
     whatsappLink: '',
-    deliveryInfo: '',
-    qualityInfo: '',
+
     titleStyle: 'glow',
     backgroundImage: '',
     backgroundOpacity: 20,
@@ -51,8 +49,7 @@ export default function SettingsManager() {
           bannerText: data.bannerText || '',
           loadingText: data.loadingText || '',
           whatsappLink: data.whatsappLink || data.telegramLink || '',
-          deliveryInfo: data.deliveryInfo || '',
-          qualityInfo: data.qualityInfo || '',
+
           titleStyle: data.titleStyle || 'glow',
           backgroundImage: data.backgroundImage || '',
           backgroundOpacity: data.backgroundOpacity || 20,
@@ -374,41 +371,7 @@ export default function SettingsManager() {
           </div>
         </div>
 
-        {/* Informations livraison */}
-        <div className="bg-gray-900 border border-white/20 rounded-xl p-6">
-          <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-            <span className="mr-2">🚚</span>
-            Informations de livraison
-          </h2>
-          
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Informations de livraison
-              </label>
-              <input
-                type="text"
-                value={settings.deliveryInfo}
-                onChange={(e) => updateField('deliveryInfo', e.target.value)}
-                className="w-full bg-gray-800 border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white"
-                placeholder="🚚 Livraison Bordeaux • 📦 Envoi postal France"
-              />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Informations qualité
-              </label>
-              <input
-                type="text"
-                value={settings.qualityInfo}
-                onChange={(e) => updateField('qualityInfo', e.target.value)}
-                className="w-full bg-gray-800 border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white"
-                placeholder="Qualité premium garantie • Produit testé"
-              />
-            </div>
-          </div>
-        </div>
 
         {/* Aperçu en temps réel */}
         <div className="bg-gray-900 border border-white/20 rounded-xl p-6">

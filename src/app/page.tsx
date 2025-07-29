@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import Navigation from '../components/Navigation';
+
 import CategoryFilter from '../components/CategoryFilter';
 import ProductCard, { Product } from '../components/ProductCard';
 import ProductDetail from '../components/ProductDetail';
@@ -192,7 +192,6 @@ export default function HomePage() {
         ) : (
           <>
             <Header />
-            <Navigation />
             
             {selectedProduct ? (
               <ProductDetail 
@@ -200,9 +199,9 @@ export default function HomePage() {
                 onClose={() => setSelectedProduct(null)} 
               />
             ) : (
-              <div className="pt-20 sm:pt-24 lg:pt-28">
-                {/* Espacement pour éviter le chevauchement avec le header et navigation */}
-                <div className="h-6 sm:h-8"></div>
+              <div className="pt-12 sm:pt-14">
+                {/* Espacement pour éviter le chevauchement avec le header */}
+                <div className="h-4 sm:h-6"></div>
                 
                 <CategoryFilter
                   categories={categories}
