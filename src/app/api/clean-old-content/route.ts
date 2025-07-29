@@ -3,7 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb-fixed';
 
 export async function POST() {
   try {
-    console.log('🧹 Nettoyage de l\'ancien contenu - Installation PLUG...');
+    console.log('🧹 Nettoyage de l\'ancien contenu...');
     
     const { db } = await connectToDatabase();
     

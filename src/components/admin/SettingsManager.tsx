@@ -259,7 +259,7 @@ export default function SettingsManager() {
         <div className="bg-gray-900 border border-white/20 rounded-xl p-6">
           <h2 className="text-xl font-bold text-white mb-6 flex items-center">
             <span className="mr-2">🎨</span>
-                            Style du titre PLUG
+                            Style du titre de la boutique
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -444,10 +444,10 @@ export default function SettingsManager() {
             {/* Logo */}
             <div className="bg-black py-6 px-4 text-center border-b border-white/20">
               <h1 className="text-2xl font-black text-white tracking-wider">
-                {settings.shopTitle || 'PLUG'}
+                {settings.shopTitle || 'TITRE'}
               </h1>
               <p className="text-gray-400 text-xs mt-1 uppercase tracking-[0.2em] font-medium">
-                {settings.shopSubtitle || 'Premium Concentrés'}
+                                  {settings.shopSubtitle || 'Sous-titre'}
               </p>
             </div>
           </div>

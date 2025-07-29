@@ -13,26 +13,16 @@ export async function GET() {
     console.log('✅ Social Links trouvés:', socialLinks);
     
     // Données par défaut si aucun lien social en BDD
-    if (socialLinks.length === 0) {
-      const defaultSocialLinks = [
-        { name: 'Telegram', url: 'https://t.me/plugchannel', icon: '📱', color: '#0088cc', isActive: true },
-        { name: 'Instagram', url: 'https://instagram.com/plug', icon: '📷', color: '#E4405F', isActive: true },
-        { name: 'WhatsApp', url: 'https://wa.me/33123456789', icon: '💬', color: '#25D366', isActive: true },
-        { name: 'Discord', url: 'https://discord.gg/plug', icon: '🎮', color: '#7289DA', isActive: true }
-      ];
-      
-      await socialLinksCollection.insertMany(defaultSocialLinks);
-      return NextResponse.json(defaultSocialLinks);
-    }
+          if (socialLinks.length === 0) {
+        return NextResponse.json([]);
+      }
     
     return NextResponse.json(socialLinks);
   } catch (error) {
     console.error('❌ Erreur API Social Links GET:', error);
     
     // Fallback data si erreur DB
-    const fallbackSocialLinks = [
-      { name: 'Telegram', url: 'https://t.me/plugchannel', icon: '📱', color: '#0088cc', isActive: true }
-    ];
+    const fallbackSocialLinks = [];
     
     return NextResponse.json(fallbackSocialLinks);
   }

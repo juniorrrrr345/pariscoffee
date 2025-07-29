@@ -3,11 +3,11 @@ import mongoose from 'mongoose';
 const settingsSchema = new mongoose.Schema({
   shopTitle: {
     type: String,
-    default: 'PLUG'
+    default: ''
   },
   shopSubtitle: {
     type: String,
-    default: 'Premium Cannabis'
+    default: ''
   },
   bannerText: {
     type: String,

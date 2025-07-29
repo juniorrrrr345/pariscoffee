@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       // Configuration simplifiée pour éviter les erreurs
       const uploadOptions: any = {
         resource_type: isVideo ? 'video' : 'image',
-        folder: isVideo ? 'plug_videos' : 'plug_images', // Pas de slash pour éviter erreurs
+        folder: isVideo ? 'boutique_videos' : 'boutique_images', // Pas de slash pour éviter erreurs
         public_id: `upload_${Date.now()}`, // Nom simplifié
         overwrite: true
       };

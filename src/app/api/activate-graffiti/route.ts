@@ -12,18 +12,18 @@ export async function POST() {
     const result = await settingsCollection.replaceOne(
       {}, // Critère de recherche (vide = premier document)
       {
-        shopTitle: 'PLUG',
-        shopSubtitle: 'Boutique en ligne',
+        shopTitle: '',
+        shopSubtitle: '',
         titleStyle: 'graffiti',
         bannerText: '',
-        scrollingText: 'PLUG 3.0 📲 • CONTACT • PLUG',
+        scrollingText: '',
         backgroundImage: '',
         backgroundOpacity: 20,
         backgroundBlur: 5,
         telegramLink: '',
         canalLink: '',
-        deliveryInfo: '🚚 Livraison rapide • 📦 Envoi sécurisé',
-        qualityInfo: 'Qualité garantie • Produits testés',
+        deliveryInfo: '',
+        qualityInfo: '',
         updatedAt: new Date()
       },
       { upsert: true } // Créer si n'existe pas

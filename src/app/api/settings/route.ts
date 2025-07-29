@@ -48,17 +48,17 @@ export async function GET() {
     
     // Fallback settings si erreur DB
     const fallbackSettings = {
-      shopTitle: 'PLUG',
-      shopSubtitle: 'Boutique en ligne',
-      scrollingText: 'PLUG 3.0 📲 • CONTACT • PLUG',
+      shopTitle: '',
+      shopSubtitle: '',
+      scrollingText: '',
       bannerText: '',
       backgroundImage: '',
       backgroundOpacity: 20,
       backgroundBlur: 5,
       telegramLink: '',
       telegramOrderLink: '',
-      email: 'contact@plug.fr',
-      address: 'France'
+      email: '',
+      address: ''
     };
     
     console.log('⚠️ Utilisation fallback settings');

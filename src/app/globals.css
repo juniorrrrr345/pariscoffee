@@ -248,7 +248,7 @@ body {
 }
 
 /* Titre responsive avec clamp */
-.plug-title {
+.shop-title {
   font-weight: 900;
   font-size: clamp(1.5rem, 5vw, 2.5rem); /* Responsive font size */
   color: white;
@@ -262,7 +262,7 @@ body {
   line-height: 1.2;
 }
 
-.plug-title::after {
+.shop-title::after {
   content: "";
   position: absolute;
   bottom: -4px;
