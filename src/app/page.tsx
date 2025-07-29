@@ -24,9 +24,6 @@ export default function HomePage() {
   
   // États pour les données - Initialiser avec des valeurs par défaut
   const [loading, setLoading] = useState(() => {
-    // TEMPORAIRE: Forcer l'affichage du chargement pour test
-    return true;
-    
     // Afficher le chargement seulement si c'est la première visite
     if (typeof window !== 'undefined') {
       const hasVisited = sessionStorage.getItem('hasVisited');
