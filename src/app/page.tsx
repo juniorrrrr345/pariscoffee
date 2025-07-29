@@ -34,15 +34,51 @@ export default function HomePage() {
     }
     return false;
   });
-  const [products, setProducts] = useState<Product[]>(contentCache.getProducts());
-  const [categories, setCategories] = useState<string[]>(() => {
+  
+  // Charger immédiatement depuis localStorage si disponible
+  const getInitialProducts = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('products');
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch (e) {}
+    }
+    return contentCache.getProducts();
+  };
+  
+  const getInitialCategories = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('categories');
+        if (cached) {
+          const categories = JSON.parse(cached);
+          return ['Toutes les catégories', ...categories.map((c: any) => c.name)];
+        }
+      } catch (e) {}
+    }
     const cached = contentCache.getCategories();
     return cached.length > 0 ? ['Toutes les catégories', ...cached.map((c: any) => c.name)] : ['Toutes les catégories'];
-  });
-  const [farms, setFarms] = useState<string[]>(() => {
+  };
+  
+  const getInitialFarms = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('farms');
+        if (cached) {
+          const farms = JSON.parse(cached);
+          return ['Toutes les farms', ...farms.map((f: any) => f.name)];
+        }
+      } catch (e) {}
+    }
     const cached = contentCache.getFarms();
     return cached.length > 0 ? ['Toutes les farms', ...cached.map((f: any) => f.name)] : ['Toutes les farms'];
-  });
+  };
+  
+  const [products, setProducts] = useState<Product[]>(getInitialProducts());
+  const [categories, setCategories] = useState<string[]>(getInitialCategories());
+  const [farms, setFarms] = useState<string[]>(getInitialFarms());
 
   // CHARGEMENT INSTANTANÉ DEPUIS LE CACHE
   useEffect(() => {
@@ -133,9 +169,9 @@ export default function HomePage() {
   };
 
   // Écran de chargement original avec fond de thème
-  if (loading) {
+  if (loading && products.length === 0) {
     return (
-      <div className="main-container">
+      <div className="main-container" style={{ minHeight: '100vh', backgroundColor: 'black' }}>
         <div className="global-overlay"></div>
         <div className="content-layer">
           <div className="min-h-screen flex items-center justify-center">
