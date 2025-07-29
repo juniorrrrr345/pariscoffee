@@ -33,6 +33,38 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="format-detection" content="telephone=no" />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              /* Background par défaut pour éviter l'écran noir */
+              html, body {
+                background-color: #1a1a1a !important;
+                background-image: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+                min-height: 100vh;
+              }
+              .main-container {
+                min-height: 100vh;
+                background-color: transparent;
+              }
+              .global-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(5px);
+                -webkit-backdrop-filter: blur(5px);
+                z-index: 1;
+              }
+              .content-layer {
+                position: relative;
+                z-index: 2;
+                min-height: 100vh;
+              }
+            `
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `

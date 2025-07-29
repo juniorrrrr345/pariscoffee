@@ -171,8 +171,14 @@ export default function HomePage() {
   // Écran de chargement original avec fond de thème
   if (loading) {
     return (
-      <div className="main-container">
-        <div className="global-overlay"></div>
+      <div className="main-container" style={{ 
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)'
+      }}>
+        <div className="global-overlay" style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          backdropFilter: 'blur(5px)'
+        }}></div>
         <div className="content-layer">
           <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">
