@@ -70,21 +70,34 @@ export default function HomePage() {
         } catch (cacheError) {
           console.error('Erreur cache:', cacheError);
         }
+      } finally {
+        // Toujours arrêter le chargement après le traitement
+        setTimeout(() => setLoading(false), 800);
       }
-      
-      // Arrêter le chargement après un délai pour voir l'animation
-      setTimeout(() => setLoading(false), 1200);
     };
     
     loadData();
     
+    // Timeout de sécurité pour éviter le chargement infini
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('⚠️ Chargement trop long, forçage de l\'arrêt');
+        setLoading(false);
+      }
+    }, 5000); // 5 secondes max
+    
     // Rafraîchir les données toutes les 2 secondes pour synchronisation instantanée
     const interval = setInterval(() => {
-      loadData();
+      if (!loading) { // Ne pas rafraîchir pendant le chargement initial
+        loadData();
+      }
     }, 2000);
     
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [loading]);
 
   // Filtrage des produits
   const filteredProducts = products.filter(product => {
@@ -110,84 +123,51 @@ export default function HomePage() {
             <div className="text-center max-w-md w-full">
               {/* Container avec fond semi-transparent pour meilleure visibilité */}
               <div className="bg-black/70 backdrop-blur-md rounded-2xl p-8 sm:p-10 md:p-12 border border-white/20 shadow-2xl">
-                {/* Logo ou titre */}
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-8 tracking-wider animate-pulse">
-                  JBEL INDUSTRY
-                </h1>
-                
-                {/* Spinner amélioré */}
-                <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 mx-auto mb-8">
-                  <div className="absolute inset-0 border-4 border-white/20 rounded-full"></div>
-                  <div className="absolute inset-0 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                {/* Logo ou titre avec effet néon */}
+                <div className="relative mb-8">
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-gradient">
+                    JBEL INDUSTRY
+                  </h1>
+                  <div className="absolute inset-0 blur-xl bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 opacity-50 animate-pulse"></div>
                 </div>
                 
-                {/* Barre de progression améliorée */}
-                <div className="w-full max-w-xs mx-auto mb-6">
-                  <div className="bg-white/10 rounded-full h-3 sm:h-4 overflow-hidden backdrop-blur-sm">
-                    <div className="bg-gradient-to-r from-white to-gray-300 h-full rounded-full animate-progress shadow-lg"></div>
+                {/* Nouveau spinner moderne */}
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 mx-auto mb-8">
+                  <div className="absolute inset-0">
+                    <div className="w-full h-full border-4 border-transparent border-t-blue-500 border-r-purple-500 rounded-full animate-spin"></div>
                   </div>
-                  {/* Pourcentage */}
-                  <div className="mt-2 text-white/80 text-sm sm:text-base font-medium">
-                    <span className="animate-pulse">Chargement...</span>
+                  <div className="absolute inset-2">
+                    <div className="w-full h-full border-4 border-transparent border-b-pink-500 border-l-cyan-500 rounded-full animate-spin-reverse"></div>
+                  </div>
+                  <div className="absolute inset-4">
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 rounded-full animate-pulse"></div>
                   </div>
                 </div>
                 
-                {/* Texte signature */}
-                <p className="text-white text-base sm:text-lg md:text-xl font-bold tracking-wider mt-6">
-                  BY PLGSCRTF 🔌
-                </p>
+                {/* Indicateur de chargement moderne */}
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                  
+                  {/* Texte de chargement dynamique */}
+                  <div className="text-white text-lg font-semibold">
+                    <span className="animate-pulse">Initialisation de la boutique</span>
+                  </div>
+                </div>
                 
-                {/* Message de chargement */}
-                <p className="text-white/60 text-xs sm:text-sm mt-4 animate-pulse">
-                  Préparation de votre expérience shopping
-                </p>
+                {/* Message de chargement avec icône */}
+                <div className="flex items-center justify-center gap-2 text-white/70 text-sm">
+                  <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Connexion aux services...</span>
+                </div>
               </div>
               
-              {/* Style pour l'animation de la barre */}
-              <style jsx>{`
-                @keyframes progress {
-                  0% { 
-                    width: 0%; 
-                    opacity: 0.5;
-                  }
-                  30% { 
-                    width: 30%; 
-                    opacity: 1;
-                  }
-                  60% { 
-                    width: 65%; 
-                    opacity: 1;
-                  }
-                  90% { 
-                    width: 90%; 
-                    opacity: 1;
-                  }
-                  100% { 
-                    width: 100%; 
-                    opacity: 0.8;
-                  }
-                }
-                .animate-progress {
-                  animation: progress 0.8s ease-out forwards;
-                }
-                
-                /* Animation du spinner responsive */
-                @keyframes spin {
-                  to { transform: rotate(360deg); }
-                }
-                .animate-spin {
-                  animation: spin 1s linear infinite;
-                }
-                
-                /* Effet de pulsation */
-                @keyframes pulse {
-                  0%, 100% { opacity: 1; }
-                  50% { opacity: 0.7; }
-                }
-                .animate-pulse {
-                  animation: pulse 2s ease-in-out infinite;
-                }
-              `}</style>
+
             </div>
           </div>
         </div>
