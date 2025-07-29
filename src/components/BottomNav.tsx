@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 
 const navItems = [
   {
@@ -41,21 +41,36 @@ const navItems = [
   }
 ];
 
-interface BottomNavProps {
-  activeTab?: string;
-  onTabChange?: (tabId: string) => void;
-}
-
-export default function BottomNav({ activeTab = 'menu', onTabChange }: BottomNavProps) {
+export default function BottomNav() {
+  const pathname = usePathname();
+  const router = useRouter();
+  
+  // Déterminer l'onglet actif basé sur l'URL
+  const getActiveTab = () => {
+    if (pathname === '/info') return 'infos';
+    if (pathname === '/contact') return 'contact';
+    if (pathname === '/social') return 'social';
+    return 'menu';
+  };
+  
+  const activeTab = getActiveTab();
+  
   const handleTabClick = (tabId: string) => {
-    // Pour Menu, on appelle directement onTabChange sans navigation
-    if (tabId === 'menu') {
-      onTabChange(tabId);
-      return;
+    // Navigation basée sur l'ID
+    switch (tabId) {
+      case 'menu':
+        router.push('/');
+        break;
+      case 'infos':
+        router.push('/info');
+        break;
+      case 'contact':
+        router.push('/contact');
+        break;
+      case 'social':
+        router.push('/social');
+        break;
     }
-    
-    // Pour les autres tabs, on utilise onTabChange qui gère la navigation
-    onTabChange(tabId);
   };
 
   return (

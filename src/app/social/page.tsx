@@ -1,10 +1,7 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
+import { connectToDatabase } from '@/lib/mongodb-fixed';
 
 interface SocialLink {
   _id: string;
@@ -23,60 +20,31 @@ interface Settings {
   whatsappLink: string;
 }
 
-export default function SocialPage() {
-  // NE JAMAIS charger depuis localStorage - toujours depuis l'API
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [activeTab, setActiveTab] = useState('social');
-  const router = useRouter();
-
-  useEffect(() => {
-    // Précharger les autres pages
-    router.prefetch('/');
-    router.prefetch('/info');
-    router.prefetch('/contact');
+async function getSocialData() {
+  try {
+    const { db } = await connectToDatabase();
     
-    // Charger DIRECTEMENT depuis l'API
-    loadFreshData();
-  }, [router]);
+    const [socialLinks, settings] = await Promise.all([
+      db.collection('socialLinks').find({ isActive: true }).toArray(),
+      db.collection('settings').findOne({})
+    ]);
+    
+    return {
+      socialLinks: socialLinks as SocialLink[],
+      settings: settings as Settings | null
+    };
+  } catch (error) {
+    console.error('Erreur chargement social:', error);
+    return {
+      socialLinks: [],
+      settings: null
+    };
+  }
+}
 
-  const loadFreshData = async () => {
-    try {
-      const [socialResponse, settingsResponse] = await Promise.all([
-        fetch('/api/social-links', { 
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' }
-        }),
-        fetch('/api/settings', { 
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' }
-        })
-      ]);
-
-      if (socialResponse.ok) {
-        const data = await socialResponse.json();
-        const activeLinks = data.filter((link: SocialLink) => link.isActive);
-        setSocialLinks(activeLinks);
-      }
-
-      if (settingsResponse.ok) {
-        const settingsData = await settingsResponse.json();
-        setSettings(settingsData);
-      }
-    } catch (error) {
-      console.error('Erreur chargement données:', error);
-    }
-  };
-
-  const handleTabChange = (tabId: string) => {
-    if (tabId === 'menu') {
-      router.push('/');
-    } else if (tabId === 'infos') {
-      router.push('/info');
-    } else if (tabId === 'contact') {
-      router.push('/contact');
-    }
-  };
+export default async function SocialPage() {
+  // Charger les données côté serveur
+  const { socialLinks, settings } = await getSocialData();
 
   // Structure cohérente avec la boutique principale
   return (
@@ -148,23 +116,28 @@ export default function SocialPage() {
             )}
 
             {/* Section contact plus visible */}
-            <div className="mt-12 text-center">
-              <Link
-                href="/contact"
-                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 border border-white/20"
-              >
-                <span>Besoin d'aide ?</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
+            {settings?.whatsappLink && (
+              <div className="mt-12 sm:mt-16 text-center">
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-6">
+                  <span className="text-2xl">💬</span> Besoin d&apos;aide ?
+                </h2>
+                <a
+                  href={settings.whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-3 bg-green-600 hover:bg-green-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-bold transition-all duration-200 transform hover:scale-105 shadow-lg"
+                >
+                  <span className="text-xl sm:text-2xl">💬</span>
+                  <span>Contactez-nous sur WhatsApp</span>
+                </a>
+              </div>
+            )}
           </main>
         </div>
       </div>
       
       {/* BottomNav toujours visible */}
-      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+      <BottomNav />
     </div>
   );
 }

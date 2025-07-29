@@ -1,40 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
 
 interface InfoPageProps {
-  onClose: () => void;
+  content: string;
 }
 
-export default function InfoPage({ onClose }: InfoPageProps) {
-  // NE JAMAIS charger depuis le cache - toujours depuis l'API
-  const [content, setContent] = useState(
-    '# À propos\n\nChargement en cours...'
-  );
-
-  useEffect(() => {
-    // Charger DIRECTEMENT depuis l'API
-    fetch('/api/pages/info', {
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache'
-      }
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.content && data.content.trim()) {
-          setContent(data.content);
-        } else {
-          // Contenu par défaut si vide
-          setContent('# À propos\n\nBienvenue sur notre boutique en ligne.\n\nVous pouvez modifier ce contenu depuis le panel administrateur.');
-        }
-      })
-      .catch(error => {
-        console.error('Erreur chargement page info:', error);
-        // Contenu par défaut en cas d'erreur
-        setContent('# À propos\n\nBienvenue sur notre boutique en ligne.\n\nVous pouvez modifier ce contenu depuis le panel administrateur.');
-      });
-  }, []);
-
+export default function InfoPage({ content }: InfoPageProps) {
   const parseMarkdown = (text: string) => {
     return text
       .replace(/^# (.+)$/gm, '<h1 class="text-2xl sm:text-3xl font-bold text-white mb-6 text-center">$1</h1>')
@@ -59,14 +29,19 @@ export default function InfoPage({ onClose }: InfoPageProps) {
         <div className="w-20 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto"></div>
       </div>
 
-        {/* Contenu principal - Affichage instantané */}
+      {/* Affichage instantané du contenu */}
+      {content ? (
         <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-white/10">
           <div 
             className="prose prose-lg max-w-none text-gray-300 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }}
           />
         </div>
-
+      ) : (
+        <div className="text-center text-gray-500 py-12">
+          <p>Aucun contenu disponible</p>
+        </div>
+      )}
     </div>
   );
 }

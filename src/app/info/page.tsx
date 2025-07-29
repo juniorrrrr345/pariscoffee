@@ -1,24 +1,22 @@
-'use client';
-
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import InfoPage from '@/components/InfoPage';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
+import { connectToDatabase } from '@/lib/mongodb-fixed';
 
-export default function InfoPageRoute() {
-  const [activeTab] = useState('infos');
-  const router = useRouter();
+async function getInfoContent() {
+  try {
+    const { db } = await connectToDatabase();
+    const page = await db.collection('pages').findOne({ slug: 'info' });
+    return page?.content || '';
+  } catch (error) {
+    console.error('Erreur chargement info:', error);
+    return '';
+  }
+}
 
-  const handleTabChange = (tabId: string) => {
-    if (tabId === 'menu') {
-      router.push('/');
-    } else if (tabId === 'contact') {
-      router.push('/contact');
-    } else if (tabId === 'social') {
-      router.push('/social');
-    }
-  };
+export default async function InfoPageRoute() {
+  // Charger le contenu côté serveur
+  const content = await getInfoContent();
 
   return (
     <div className="main-container">
@@ -30,12 +28,12 @@ export default function InfoPageRoute() {
         <Header />
         <div className="pt-12 sm:pt-14">
           <div className="h-4 sm:h-6"></div>
-          <InfoPage onClose={() => window.history.back()} />
+          <InfoPage content={content} />
         </div>
       </div>
       
-      {/* BottomNav toujours visible */}
-      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+      {/* BottomNav */}
+      <BottomNav />
     </div>
   );
 }
