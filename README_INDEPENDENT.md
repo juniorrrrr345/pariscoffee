@@ -17,7 +17,7 @@ Cette boutique est une version **complètement indépendante** de LMVRT2, config
 
 3. **Authentification Admin**
    - Username : `admin`
-   - Password : `ChangeMe123!`
+   - Password : `JuniorAdmin123`
 
 ## 🚀 Installation Locale
 
@@ -60,7 +60,7 @@ CLOUDINARY_CLOUD_NAME=dagnmkw0e
 CLOUDINARY_API_KEY=656387237536358
 CLOUDINARY_API_SECRET=APJe9o-RlgaWWHq9zLQ0JztpACI
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=ChangeMe123!
+ADMIN_PASSWORD=JuniorAdmin123
 NEXTAUTH_SECRET=QPsLBwVZRvPG7kH8gXdq3hyD9JjU4smB5rrVrEbD6hs=
 NEXTAUTH_URL=https://votre-projet.vercel.app
 ```
@@ -81,7 +81,7 @@ NEXTAUTH_URL=https://votre-projet.vercel.app
 
 ⚠️ **IMPORTANT** : Changez immédiatement ces éléments après le déploiement :
 
-1. **Mot de passe admin** : Changez `ChangeMe123!` dans l'interface admin
+1. **Mot de passe admin** : Le mot de passe est déjà configuré comme `JuniorAdmin123`
 2. **NEXTAUTH_SECRET** : Générez un nouveau secret avec :
    ```bash
    openssl rand -base64 32
