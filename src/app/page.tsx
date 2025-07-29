@@ -212,7 +212,7 @@ export default function HomePage() {
                   onFarmChange={setSelectedFarm}
                 />
                 
-                <main className="pt-4 pb-20 sm:pb-24 px-3 sm:px-4 lg:px-6 xl:px-8 max-w-7xl mx-auto">
+                <main className="pt-4 pb-24 sm:pb-28 px-3 sm:px-4 lg:px-6 xl:px-8 max-w-7xl mx-auto">
 
                 {/* Affichage des produits */}
                 {products.length === 0 ? (
@@ -260,9 +260,10 @@ export default function HomePage() {
           </>
         )}
 
-        {/* BottomNav toujours visible */}
-        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
       </div>
+      
+      {/* BottomNav toujours visible - en dehors du content-layer */}
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
     </div>
   );
 }

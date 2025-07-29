@@ -58,7 +58,7 @@ export default function BottomNav({ activeTab = 'menu', onTabChange }: BottomNav
 
   return (
     <nav 
-      className="bottom-nav-container bg-black/95 backdrop-blur-sm border-t border-white/20 safe-area-padding"
+      className="bottom-nav-container bg-black border-t border-white/20 safe-area-padding"
     >
       <div className="flex items-center justify-around py-1.5 sm:py-2 px-2 sm:px-4">
         {navItems.map((item) => (

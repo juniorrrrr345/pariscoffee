@@ -168,6 +168,9 @@ body {
   -webkit-transform: translateZ(0) !important;
   transform: translateZ(0) !important;
   will-change: auto !important;
+  /* Empêcher le flou de l'overlay global */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 /* Amélioration pour les conteneurs de page avec BottomNav */
