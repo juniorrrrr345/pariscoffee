@@ -23,24 +23,17 @@ export default function HomePage() {
   }, [router]);
   
   // États pour les données - Initialiser avec des valeurs par défaut
-  const [loading, setLoading] = useState(() => {
-    // Afficher le chargement seulement si c'est la première visite
-    if (typeof window !== 'undefined') {
-      const hasVisited = sessionStorage.getItem('hasVisited');
-      if (!hasVisited) {
-        sessionStorage.setItem('hasVisited', 'true');
-        return true;
-      }
-    }
-    return false;
-  });
+  const [loading, setLoading] = useState(true); // TEMPORAIRE: Forcer à true pour debug
   
   // S'assurer que hasVisited reste en sessionStorage
+  // TEMPORAIRE: Commenté pour debug
+  /*
   useEffect(() => {
     if (typeof window !== 'undefined' && !loading) {
       sessionStorage.setItem('hasVisited', 'true');
     }
   }, [loading]);
+  */
   
   // Charger le thème depuis l'API au démarrage
   useEffect(() => {
