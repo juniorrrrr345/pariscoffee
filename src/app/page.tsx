@@ -223,33 +223,33 @@ export default function HomePage() {
         <div className="global-overlay"></div>
         <div className="content-layer">
           <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="text-center">
+            <div className="text-center bg-black/60 backdrop-blur-md rounded-3xl p-8 sm:p-12 max-w-lg mx-auto border border-white/20">
               {/* Logo animé moderne */}
               <div className="mb-8">
                 <div className="relative w-40 h-40 mx-auto">
-                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full blur-2xl opacity-50 animate-pulse"></div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-full blur-xl opacity-30 animate-ping"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full blur-2xl opacity-70 animate-pulse"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-full blur-xl opacity-50 animate-ping"></div>
                   <div className="relative z-10 w-full h-full flex items-center justify-center">
                     <span className="text-8xl animate-bounce filter drop-shadow-2xl">🔥</span>
                   </div>
                 </div>
               </div>
               
-              {/* Titre avec effet néon */}
-              <h1 className="text-5xl sm:text-7xl font-black mb-2 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-transparent bg-clip-text animate-pulse">
+              {/* Titre avec effet néon et ombre */}
+              <h1 className="text-5xl sm:text-7xl font-black mb-4 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-transparent bg-clip-text animate-pulse drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">
                 JBEL INDUSTRY
               </h1>
               
-              <p className="text-2xl text-white/90 mb-8 font-light">
+              <p className="text-2xl text-white mb-8 font-semibold drop-shadow-lg">
                 Préparation en cours...
               </p>
               
               {/* Nouvelle barre de chargement 3D */}
               <div className="w-80 max-w-full mx-auto mb-8">
-                <div className="h-4 bg-black/50 rounded-full overflow-hidden border border-white/20 shadow-inner">
+                <div className="h-4 bg-white/20 rounded-full overflow-hidden border border-white/40 shadow-inner">
                   <div className="h-full bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-full shadow-lg animate-loading-bar"></div>
                 </div>
-                <div className="mt-2 text-sm text-white/50">Chargement...</div>
+                <div className="mt-2 text-sm text-white font-medium drop-shadow-md">Chargement...</div>
               </div>
               
               {/* Animation de particules */}
@@ -260,7 +260,7 @@ export default function HomePage() {
               </div>
               
               {/* Footer */}
-              <div className="text-white/30 text-sm">
+              <div className="text-white text-sm font-medium drop-shadow-md">
                 <p>© 2025 JUNIOR X JBEL</p>
               </div>
             </div>
