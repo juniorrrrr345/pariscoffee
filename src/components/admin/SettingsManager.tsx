@@ -85,6 +85,10 @@ export default function SettingsManager() {
         setMessage('✅ Paramètres sauvegardés ! Les changements sont visibles immédiatement sur la boutique');
         setTimeout(() => setMessage(''), 3000);
         
+        // Sauvegarder dans localStorage et émettre un événement pour mise à jour instantanée
+        localStorage.setItem('shopSettings', JSON.stringify(settings));
+        window.dispatchEvent(new CustomEvent('settingsUpdated', { detail: settings }));
+        
         // Pas besoin de recharger - évite les doublons
         // Les données sont déjà à jour dans l'état local
       } else {
