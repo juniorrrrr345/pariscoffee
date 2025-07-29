@@ -1,6 +1,8 @@
-# 🛍️ HashBurger - Boutique E-commerce Complète
+# JBEL INDUSTRY Shop - Boutique E-commerce Moderne
 
-Une boutique e-commerce moderne et complète avec panel admin intégré, prête à être dupliquée pour créer de nouvelles boutiques.
+<!-- Deploy: 2025-01-29 19:39 -->
+
+Une boutique e-commerce moderne et élégante avec panel d'administration complet.
 
 ## ✨ Fonctionnalités
 
