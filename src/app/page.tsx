@@ -35,6 +35,49 @@ export default function HomePage() {
     return false;
   });
   
+  // Charger le thème depuis l'API au démarrage
+  useEffect(() => {
+    const loadThemeForNewVisitors = async () => {
+      try {
+        // Charger les paramètres depuis l'API pour les nouveaux visiteurs
+        const settingsRes = await fetch('/api/settings', { cache: 'no-store' });
+        if (settingsRes.ok) {
+          const settings = await settingsRes.json();
+          
+          // Sauvegarder dans localStorage pour les prochaines visites
+          localStorage.setItem('shopSettings', JSON.stringify(settings));
+          
+          // Appliquer le thème immédiatement
+          if (settings.backgroundImage) {
+            const style = document.createElement('style');
+            style.id = 'dynamic-theme-new-visitor';
+            style.textContent = `
+              html, body, .main-container {
+                background-image: url(${settings.backgroundImage}) !important;
+                background-size: cover !important;
+                background-position: center !important;
+                background-repeat: no-repeat !important;
+                background-attachment: fixed !important;
+              }
+              .global-overlay {
+                background-color: rgba(0, 0, 0, ${(settings.backgroundOpacity || 20) / 100}) !important;
+                backdrop-filter: blur(${settings.backgroundBlur || 5}px) !important;
+              }
+            `;
+            document.head.appendChild(style);
+          }
+        }
+      } catch (error) {
+        console.error('Erreur chargement thème:', error);
+      }
+    };
+    
+    // Charger le thème immédiatement pour les nouveaux visiteurs
+    if (!localStorage.getItem('shopSettings')) {
+      loadThemeForNewVisitors();
+    }
+  }, []);
+
   // Charger immédiatement depuis localStorage si disponible
   const getInitialProducts = () => {
     if (typeof window !== 'undefined') {
@@ -135,10 +178,12 @@ export default function HomePage() {
       setLoading(false);
     }, 1500); // 1.5 secondes
     
-    // Rafraîchir les données toutes les 2 secondes pour synchronisation
+    // Rafraîchir les données toutes les secondes pour synchronisation temps réel
     const interval = setInterval(() => {
       loadFreshData();
-    }, 2000);
+    }, 1000); // 1 seconde pour synchronisation instantanée
+    
+    // Écouter les changements de paramètres
     
     return () => {
       clearTimeout(loadingTimeout);
@@ -176,38 +221,53 @@ export default function HomePage() {
         background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)'
       }}>
         <div className="global-overlay" style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.3)',
-          backdropFilter: 'blur(5px)'
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          backdropFilter: 'blur(8px)'
         }}></div>
         <div className="content-layer">
           <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              {/* Animation de connexion */}
-              <div className="mb-8 relative">
-                <div className="inline-flex items-center gap-4 text-4xl sm:text-5xl md:text-6xl">
-                  <span className="animate-pulse">📲</span>
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                    <span className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></span>
-                    <span className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></span>
+            <div className="text-center p-8">
+              {/* Logo animé moderne */}
+              <div className="mb-12 relative">
+                <div className="w-32 h-32 mx-auto relative">
+                  {/* Cercle extérieur animé */}
+                  <div className="absolute inset-0 border-4 border-white/20 rounded-full animate-ping"></div>
+                  <div className="absolute inset-0 border-4 border-white/40 rounded-full animate-pulse"></div>
+                  
+                  {/* Logo central */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-5xl animate-bounce">⚡</div>
                   </div>
-                  <span className="animate-pulse animation-delay-1000">🔌</span>
                 </div>
               </div>
               
-              {/* Texte de connexion */}
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 animate-pulse">
-                Connexion en cours
-              </h2>
+              {/* Titre principal */}
+              <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 animate-fade-in">
+                JBEL INDUSTRY
+              </h1>
               
-              {/* Barre de progression */}
-              <div className="w-64 h-1 bg-white/20 rounded-full mx-auto mb-8 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-loading-bar"></div>
+              {/* Sous-titre animé */}
+              <p className="text-xl text-white/80 mb-8 animate-pulse">
+                Chargement de votre expérience...
+              </p>
+              
+              {/* Nouvelle barre de progression */}
+              <div className="w-80 max-w-full mx-auto">
+                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-full animate-loading-bar"></div>
+                </div>
               </div>
               
-              {/* Signature discrète */}
-              <p className="text-xs text-white/40 font-light tracking-wider">
-                JUNIOR X JBEL
+              {/* Indicateurs de chargement */}
+              <div className="mt-8 flex justify-center gap-2">
+                <span className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></span>
+                <span className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></span>
+              </div>
+              
+              {/* Signature */}
+              <p className="mt-12 text-sm text-white/30 font-light">
+                Powered by JUNIOR X JBEL
               </p>
             </div>
           </div>
