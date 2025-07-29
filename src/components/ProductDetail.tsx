@@ -54,9 +54,10 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
     });
 
   return (
-    <div className="fixed inset-0 bg-black z-50 overflow-y-auto safe-area-padding">
-      {/* Header avec bouton retour - responsive */}
-      <div className="sticky top-0 bg-black/95 backdrop-blur-sm p-3 sm:p-4 flex items-center justify-between border-b border-white/20 z-10">
+    <div className="fixed inset-0 bg-black z-50 overflow-hidden">
+      <div className="h-full overflow-y-auto overscroll-contain">
+        {/* Header avec bouton retour - responsive */}
+        <div className="sticky top-0 bg-black/95 backdrop-blur-sm p-3 sm:p-4 flex items-center justify-between border-b border-white/20 z-10">
         <button
           onClick={onClose}
           className="text-white hover:text-gray-300 transition-colors p-1 touch-manipulation"
@@ -147,6 +148,7 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
             <span className="text-responsive-sm sm:text-responsive-base">Commander via WhatsApp</span>
           </div>
         </a>
+      </div>
       </div>
     </div>
   );

@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Empêcher le glissement indésirable sur mobile */
+.overscroll-contain {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Désactiver le pull-to-refresh sur mobile */
+body {
+  overscroll-behavior-y: none;
+}
+
 /* Animations personnalisées */
 @keyframes fadeIn {
   from {

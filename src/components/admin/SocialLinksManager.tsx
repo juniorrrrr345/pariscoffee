@@ -325,18 +325,33 @@ export default function SocialLinksManager() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Emoji du réseau *
                 </label>
-                <select
-                  value={formData.icon || ''}
-                  onChange={(e) => updateFormField('icon', e.target.value)}
-                  className="w-full bg-gray-800 border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/50"
-                >
-                  <option value="">Sélectionner un emoji</option>
-                  {iconOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="space-y-2">
+                  {/* Input pour emoji personnalisé */}
+                  <input
+                    type="text"
+                    value={formData.icon || ''}
+                    onChange={(e) => updateFormField('icon', e.target.value)}
+                    className="w-full bg-gray-800 border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/50 text-center text-2xl"
+                    placeholder="Entrez un emoji"
+                    maxLength={5}
+                  />
+                  <p className="text-xs text-gray-400">Tapez directement un emoji ou choisissez ci-dessous</p>
+                  
+                  {/* Emojis suggérés */}
+                  <div className="grid grid-cols-8 gap-1">
+                    {iconOptions.map(option => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => updateFormField('icon', option.value)}
+                        className={`p-2 rounded hover:bg-gray-700 transition-colors ${formData.icon === option.value ? 'bg-gray-700 ring-2 ring-white' : ''}`}
+                        title={option.label}
+                      >
+                        <span className="text-xl">{option.value}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Couleur */}

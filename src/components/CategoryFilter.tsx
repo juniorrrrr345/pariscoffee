@@ -39,26 +39,19 @@ export default function CategoryFilter({
   }, []);
 
   return (
-    <div className="sticky top-0 z-30 bg-gradient-to-b from-black via-gray-900/95 to-black/90 backdrop-blur-xl border-b border-white/20 shadow-2xl pt-2 sm:pt-3">
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-4 sm:p-5 max-w-7xl mx-auto">
-        {/* Dropdown Catégories - Design premium */}
+    <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-sm border-b border-white/10 pt-1 sm:pt-2">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 p-2 sm:p-3 max-w-7xl mx-auto">
+        {/* Dropdown Catégories - Design discret */}
         <div className="relative flex-1" ref={categoryRef}>
           <button
             onClick={() => {
               setShowCategories(!showCategories);
               setShowFarms(false);
             }}
-            className="w-full bg-gradient-to-r from-blue-600/20 to-purple-600/20 hover:from-blue-600/30 hover:to-purple-600/30 border border-blue-500/30 hover:border-blue-500/50 text-white py-3.5 px-5 rounded-2xl text-sm font-semibold transition-all duration-300 flex items-center justify-between shadow-xl hover:shadow-blue-500/20 transform hover:scale-[1.02] backdrop-blur-md group"
+            className="w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white/80 hover:text-white py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-between"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-blue-500/50 transition-all">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </div>
-              <span className="truncate text-base">{selectedCategory}</span>
-            </div>
-            <svg className={`w-5 h-5 transition-all duration-300 flex-shrink-0 ${showCategories ? 'rotate-180 text-blue-400' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20">
+            <span className="truncate">{selectedCategory}</span>
+            <svg className={`w-4 h-4 transition-transform duration-200 flex-shrink-0 ${showCategories ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
           </button>
