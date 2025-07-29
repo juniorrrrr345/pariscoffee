@@ -6,8 +6,8 @@ interface Settings {
   shopSubtitle: string;
   bannerText: string;
   loadingText: string;
-  telegramLink: string;
-  canalLink: string;
+  whatsappLink: string;
+  whatsappOrderLink: string;
   deliveryInfo: string;
   qualityInfo: string;
   titleStyle: string;
@@ -23,8 +23,8 @@ export default function SettingsManager() {
     shopSubtitle: '',
     bannerText: '',
     loadingText: '',
-    telegramLink: '',
-    canalLink: '',
+    whatsappLink: '',
+    whatsappOrderLink: '',
     deliveryInfo: '',
     qualityInfo: '',
     titleStyle: 'glow',
@@ -52,8 +52,8 @@ export default function SettingsManager() {
           shopSubtitle: data.shopSubtitle || '',
           bannerText: data.bannerText || '',
           loadingText: data.loadingText || '',
-          telegramLink: data.telegramLink || '',
-          canalLink: data.canalLink || '',
+          whatsappLink: data.whatsappLink || data.telegramLink || '',
+          whatsappOrderLink: data.whatsappOrderLink || data.telegramOrderLink || data.canalLink || '',
           deliveryInfo: data.deliveryInfo || '',
           qualityInfo: data.qualityInfo || '',
           titleStyle: data.titleStyle || 'glow',
@@ -121,14 +121,14 @@ export default function SettingsManager() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl">
-      {/* Header avec bouton de sauvegarde */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sticky top-0 bg-black/90 backdrop-blur-sm p-4 -m-4 rounded-xl border border-white/10 z-10">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">Configuration de la Boutique</h1>
+    <div className="p-2 sm:p-4 md:p-6 lg:p-8 max-w-full lg:max-w-7xl mx-auto">
+      {/* Header avec bouton de sauvegarde - optimisé responsive */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 sm:gap-4 sticky top-0 bg-black/95 backdrop-blur-md p-3 sm:p-4 -mx-2 sm:-mx-4 rounded-lg sm:rounded-xl border border-white/10 z-10">
+        <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white">Configuration de la Boutique</h1>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="bg-white hover:bg-gray-100 disabled:bg-gray-600 text-black font-bold py-2 px-4 rounded-lg flex items-center space-x-2 w-full sm:w-auto text-sm sm:text-base"
+          className="bg-white hover:bg-gray-100 disabled:bg-gray-600 text-black font-medium sm:font-bold py-1.5 sm:py-2 px-3 sm:px-4 rounded-md sm:rounded-lg flex items-center gap-1 sm:gap-2 w-full sm:w-auto text-xs sm:text-sm md:text-base transition-all"
         >
           <span>💾</span>
           <span>{saving ? 'Sauvegarde...' : 'Sauvegarder'}</span>
@@ -226,28 +226,30 @@ export default function SettingsManager() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Lien Telegram principal
+                Lien WhatsApp principal
               </label>
               <input
                 type="url"
-                value={settings.telegramLink}
-                onChange={(e) => updateField('telegramLink', e.target.value)}
+                value={settings.whatsappLink}
+                onChange={(e) => updateField('whatsappLink', e.target.value)}
                 className="w-full bg-gray-800 border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white"
-                placeholder="https://t.me/votrecanal"
+                placeholder="https://wa.me/33612345678"
               />
+              <p className="text-xs text-gray-400 mt-1">Format: https://wa.me/[code pays][numéro]</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Lien Canal (bouton Canal)
+                Lien WhatsApp Commandes
               </label>
               <input
                 type="url"
-                value={settings.canalLink}
-                onChange={(e) => updateField('canalLink', e.target.value)}
+                value={settings.whatsappOrderLink}
+                onChange={(e) => updateField('whatsappOrderLink', e.target.value)}
                 className="w-full bg-gray-800 border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white"
-                placeholder="https://t.me/votrecanal"
+                placeholder="https://wa.me/33612345678?text=Bonjour"
               />
+              <p className="text-xs text-gray-400 mt-1">Pour les commandes avec message pré-rempli</p>
               <p className="text-gray-500 text-xs mt-1">
                 Lien qui s'ouvre quand on clique sur "Canal" dans la navigation
               </p>

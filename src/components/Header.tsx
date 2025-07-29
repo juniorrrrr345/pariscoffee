@@ -103,14 +103,16 @@ export default function Header() {
         </div>
       )}
       
-                {/* Logo boutique - compact */}
-      <div className="bg-black py-1 sm:py-2 px-3 sm:px-4 text-center border-b border-white/20">
+                {/* Logo boutique - responsive optimisé */}
+      <div className="bg-black py-2 sm:py-3 md:py-4 px-3 sm:px-4 md:px-6 text-center border-b border-white/20">
         <h1 className={getTitleClass()}>
           {settings.shopTitle}
         </h1>
-        <p className="text-gray-400 text-xs uppercase tracking-[0.2em] font-medium mt-0.5 break-words">
-          {settings.shopSubtitle}
-        </p>
+        {settings.shopSubtitle && (
+          <p className="text-gray-400 text-[10px] sm:text-xs md:text-sm uppercase tracking-[0.1em] sm:tracking-[0.15em] md:tracking-[0.2em] font-medium mt-0.5 sm:mt-1 break-words">
+            {settings.shopSubtitle}
+          </p>
+        )}
       </div>
     </header>
   );

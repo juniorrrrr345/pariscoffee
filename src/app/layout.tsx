@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'JBEL INDUSTRY - Boutique en ligne',
   description: 'JBEL INDUSTRY - Votre boutique en ligne. Produits de qualité et livraison rapide.',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=5',
   themeColor: '#000000',
   appleWebApp: {
     capable: true,
@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="format-detection" content="telephone=no" />

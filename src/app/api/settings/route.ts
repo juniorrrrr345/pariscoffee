@@ -22,8 +22,10 @@ export async function GET() {
         backgroundImage: '',
         backgroundOpacity: 20,
         backgroundBlur: 5,
-        telegramLink: '',
-        telegramOrderLink: '',
+        whatsappLink: '',
+        whatsappOrderLink: '',
+        telegramLink: '', // Gardé pour compatibilité
+        telegramOrderLink: '', // Gardé pour compatibilité
         email: '',
         address: 'France',
         createdAt: new Date(),
@@ -55,8 +57,8 @@ export async function GET() {
       backgroundImage: '',
       backgroundOpacity: 20,
       backgroundBlur: 5,
-      telegramLink: '',
-      telegramOrderLink: '',
+      whatsappLink: '',
+      whatsappOrderLink: '',
       email: '',
       address: ''
     };
