@@ -37,31 +37,40 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               // Appliquer le background immédiatement depuis localStorage
-              try {
-                const settings = localStorage.getItem('shopSettings');
-                if (settings) {
-                  const parsed = JSON.parse(settings);
-                  if (parsed.backgroundImage) {
-                    const style = document.createElement('style');
-                    style.textContent = \`
-                      html, body {
-                        background-image: url(\${parsed.backgroundImage});
-                        background-size: cover;
-                        background-position: center;
-                        background-repeat: no-repeat;
-                        background-attachment: fixed;
-                        background-color: black;
-                      }
-                    \`;
-                    document.head.appendChild(style);
+              (function() {
+                try {
+                  const settings = localStorage.getItem('shopSettings');
+                  if (settings) {
+                    const parsed = JSON.parse(settings);
+                    if (parsed.backgroundImage) {
+                      const style = document.createElement('style');
+                      style.textContent = \`
+                        html, body, .main-container {
+                          background-image: url(\${parsed.backgroundImage}) !important;
+                          background-size: cover !important;
+                          background-position: center !important;
+                          background-repeat: no-repeat !important;
+                          background-attachment: fixed !important;
+                          background-color: black !important;
+                        }
+                        .global-overlay {
+                          background-color: rgba(0, 0, 0, \${(parsed.backgroundOpacity || 20) / 100}) !important;
+                          backdrop-filter: blur(\${parsed.backgroundBlur || 5}px) !important;
+                        }
+                      \`;
+                      document.head.appendChild(style);
+                    }
                   }
-                }
-              } catch (e) {}
+                  // Fond noir par défaut
+                  document.documentElement.style.backgroundColor = 'black';
+                  document.body.style.backgroundColor = 'black';
+                } catch (e) {}
+              })();
             `
           }}
         />
       </head>
-      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
+      <body className={`${inter.className} antialiased`} suppressHydrationWarning style={{ backgroundColor: 'black' }}>
         <GlobalBackgroundProvider />
         <CachePreloader />
         {children}

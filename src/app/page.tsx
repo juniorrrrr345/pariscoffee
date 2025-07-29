@@ -23,7 +23,17 @@ export default function HomePage() {
   }, [router]);
   
   // États pour les données - Initialiser avec des valeurs par défaut
-  const [loading, setLoading] = useState(true); // Afficher le chargement au début
+  const [loading, setLoading] = useState(() => {
+    // Afficher le chargement seulement si c'est la première visite
+    if (typeof window !== 'undefined') {
+      const hasVisited = sessionStorage.getItem('hasVisited');
+      if (!hasVisited) {
+        sessionStorage.setItem('hasVisited', 'true');
+        return true;
+      }
+    }
+    return false;
+  });
   const [products, setProducts] = useState<Product[]>(contentCache.getProducts());
   const [categories, setCategories] = useState<string[]>(() => {
     const cached = contentCache.getCategories();
