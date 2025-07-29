@@ -155,7 +155,8 @@ export default function SocialPage() {
             </Link>
           </div>
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
