@@ -33,12 +33,8 @@ export default function CachePreloader() {
       }
     };
 
-    // Lancer le préchargement après un court délai pour ne pas bloquer le rendu initial
-    const timeout = setTimeout(() => {
-      preloadData();
-    }, 100);
-
-    return () => clearTimeout(timeout);
+    // Lancer le préchargement immédiatement
+    preloadData();
   }, []);
 
   return null;

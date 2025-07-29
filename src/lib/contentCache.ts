@@ -22,8 +22,45 @@ class ContentCache {
   constructor() {
     if (typeof window !== 'undefined') {
       this.loadFromLocalStorage();
+      this.loadAllFromLocalStorage(); // Charger tout depuis localStorage
       // Refresh moins fréquent et avec protection
       setInterval(() => this.refreshIfNeeded(), 1000); // Toutes les secondes pour synchronisation instantanée
+    }
+  }
+  
+  private loadAllFromLocalStorage() {
+    try {
+      // Charger les produits
+      const productsCache = localStorage.getItem('products');
+      if (productsCache) {
+        this.data.products = JSON.parse(productsCache);
+      }
+      
+      // Charger les catégories
+      const categoriesCache = localStorage.getItem('categories');
+      if (categoriesCache) {
+        this.data.categories = JSON.parse(categoriesCache);
+      }
+      
+      // Charger les farms
+      const farmsCache = localStorage.getItem('farms');
+      if (farmsCache) {
+        this.data.farms = JSON.parse(farmsCache);
+      }
+      
+      // Charger les settings
+      const settingsCache = localStorage.getItem('shopSettings');
+      if (settingsCache) {
+        this.data.settings = JSON.parse(settingsCache);
+      }
+      
+      // Charger les réseaux sociaux
+      const socialCache = localStorage.getItem('socialLinks');
+      if (socialCache) {
+        this.data.socialLinks = JSON.parse(socialCache);
+      }
+    } catch (error) {
+      console.log('Erreur chargement localStorage:', error);
     }
   }
 
@@ -224,16 +261,28 @@ class ContentCache {
   updateProducts(products: any[]) {
     this.data.products = products;
     this.saveToLocalStorage();
+    // Sauvegarder aussi dans localStorage séparément pour chargement instantané
+    try {
+      localStorage.setItem('products', JSON.stringify(products));
+    } catch (e) {}
   }
 
   updateCategories(categories: any[]) {
     this.data.categories = categories;
     this.saveToLocalStorage();
+    // Sauvegarder aussi dans localStorage séparément pour chargement instantané
+    try {
+      localStorage.setItem('categories', JSON.stringify(categories));
+    } catch (e) {}
   }
 
   updateFarms(farms: any[]) {
     this.data.farms = farms;
     this.saveToLocalStorage();
+    // Sauvegarder aussi dans localStorage séparément pour chargement instantané
+    try {
+      localStorage.setItem('farms', JSON.stringify(farms));
+    } catch (e) {}
   }
 
   // Invalidate cache - force une nouvelle récupération IMMÉDIATE

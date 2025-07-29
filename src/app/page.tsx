@@ -23,10 +23,16 @@ export default function HomePage() {
   }, [router]);
   
   // États pour les données - Initialiser avec des valeurs par défaut
-  const [loading, setLoading] = useState(true); // Afficher le chargement au début
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<string[]>(['Toutes les catégories']);
-  const [farms, setFarms] = useState<string[]>(['Toutes les farms']);
+  const [loading, setLoading] = useState(false); // Pas de chargement, tout est instantané
+  const [products, setProducts] = useState<Product[]>(contentCache.getProducts());
+  const [categories, setCategories] = useState<string[]>(() => {
+    const cached = contentCache.getCategories();
+    return cached.length > 0 ? ['Toutes les catégories', ...cached.map((c: any) => c.name)] : ['Toutes les catégories'];
+  });
+  const [farms, setFarms] = useState<string[]>(() => {
+    const cached = contentCache.getFarms();
+    return cached.length > 0 ? ['Toutes les farms', ...cached.map((f: any) => f.name)] : ['Toutes les farms'];
+  });
 
   // CHARGEMENT INSTANTANÉ DEPUIS LE CACHE
   useEffect(() => {
@@ -78,18 +84,12 @@ export default function HomePage() {
     
     loadFreshData();
     
-    // Cacher le chargement après un court délai
-    const loadingTimeout = setTimeout(() => {
-      setLoading(false);
-    }, 1200); // 1.2 secondes pour un effet smooth
-    
     // Rafraîchir les données toutes les 2 secondes pour synchronisation
     const interval = setInterval(() => {
       loadFreshData();
     }, 2000);
     
     return () => {
-      clearTimeout(loadingTimeout);
       clearInterval(interval);
     };
   }, []);
@@ -116,52 +116,7 @@ export default function HomePage() {
     }
   };
 
-  // Écran de chargement élégant
-  if (loading) {
-    return (
-      <div className="main-container">
-        <div className="global-overlay"></div>
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="relative">
-            {/* Animation de fond */}
-            <div className="absolute inset-0 -m-40">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full blur-3xl animate-pulse animation-delay-1000"></div>
-            </div>
-            
-            <div className="relative z-10 text-center">
-              {/* Logo animé */}
-              <div className="mb-8">
-                <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-gradient">
-                  JBEL INDUSTRY
-                </h1>
-                <div className="h-1 w-32 mx-auto mt-4 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-full animate-gradient"></div>
-              </div>
-              
-              {/* Spinner moderne */}
-              <div className="relative w-20 h-20 mx-auto mb-8">
-                <div className="absolute inset-0 border-4 border-white/10 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-transparent border-t-white rounded-full animate-spin"></div>
-                <div className="absolute inset-2 border-4 border-transparent border-b-white/50 rounded-full animate-spin-reverse"></div>
-              </div>
-              
-              {/* Texte de chargement */}
-              <p className="text-white/70 text-lg font-medium animate-pulse">
-                Préparation de votre expérience shopping
-              </p>
-              
-              {/* Points de chargement */}
-              <div className="flex justify-center gap-2 mt-4">
-                <div className="w-2 h-2 bg-white/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 bg-white/50 rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></div>
-                <div className="w-2 h-2 bg-white/50 rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+
 
 
 
