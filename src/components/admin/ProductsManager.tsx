@@ -329,7 +329,27 @@ export default function ProductsManager() {
         }, 3000);
         
         setShowModal(false);
-        loadData(); // Recharger les données pour synchroniser
+        
+        // Forcer la synchronisation immédiate
+        try {
+          // Invalider le cache côté client
+          const cacheResponse = await fetch('/api/cache/invalidate', { method: 'POST' });
+          console.log('🔄 Cache invalidé:', cacheResponse.ok);
+        } catch (error) {
+          console.error('Erreur invalidation cache:', error);
+        }
+        
+        // Recharger les données
+        await loadData();
+        
+        // Forcer un refresh de la page boutique si elle est ouverte
+        if (window.opener || window.parent !== window) {
+          try {
+            window.opener?.location.reload();
+          } catch (e) {
+            console.log('Pas de fenêtre parent à rafraîchir');
+          }
+        }
       } else {
         // Récupérer le détail de l'erreur
         const errorData = await response.text();

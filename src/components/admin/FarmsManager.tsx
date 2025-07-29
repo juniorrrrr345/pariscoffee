@@ -52,9 +52,16 @@ export default function FarmsManager() {
   };
 
   const handleSave = async () => {
+    if (!formData.name) {
+      alert('Veuillez entrer un nom pour la farm');
+      return;
+    }
+
     try {
       const url = editingFarm ? `/api/farms/${editingFarm._id}` : '/api/farms';
       const method = editingFarm ? 'PUT' : 'POST';
+      
+      console.log('💾 Sauvegarde farm:', { url, method, data: formData });
       
       const response = await fetch(url, {
         method,
@@ -65,13 +72,29 @@ export default function FarmsManager() {
       });
 
       if (response.ok) {
+        // Message de succès
+        const successMsg = document.createElement('div');
+        successMsg.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-[9999]';
+        successMsg.textContent = editingFarm ? '✅ Farm modifiée!' : '✅ Farm ajoutée!';
+        document.body.appendChild(successMsg);
+        setTimeout(() => successMsg.remove(), 3000);
+        
         setShowModal(false);
-        loadFarms();
+        await loadFarms();
+        
+        // Forcer la synchronisation
+        try {
+          await fetch('/api/cache/invalidate', { method: 'POST' });
+        } catch (e) {
+          console.error('Erreur invalidation cache:', e);
+        }
       } else {
-        alert('Erreur lors de la sauvegarde');
+        const errorText = await response.text();
+        console.error('❌ Erreur sauvegarde:', errorText);
+        alert(`Erreur: ${response.status} - ${errorText}`);
       }
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('❌ Erreur:', error);
       alert('Erreur lors de la sauvegarde');
     }
   };

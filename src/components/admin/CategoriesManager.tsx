@@ -57,9 +57,16 @@ export default function CategoriesManager() {
   };
 
   const handleSave = async () => {
+    if (!formData.name) {
+      alert('Veuillez entrer un nom pour la catégorie');
+      return;
+    }
+
     try {
       const url = editingCategory ? `/api/categories/${editingCategory._id}` : '/api/categories';
       const method = editingCategory ? 'PUT' : 'POST';
+      
+      console.log('💾 Sauvegarde catégorie:', { url, method, data: formData });
       
       const response = await fetch(url, {
         method,
@@ -70,13 +77,29 @@ export default function CategoriesManager() {
       });
 
       if (response.ok) {
+        // Message de succès
+        const successMsg = document.createElement('div');
+        successMsg.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-[9999]';
+        successMsg.textContent = editingCategory ? '✅ Catégorie modifiée!' : '✅ Catégorie ajoutée!';
+        document.body.appendChild(successMsg);
+        setTimeout(() => successMsg.remove(), 3000);
+        
         setShowModal(false);
-        loadCategories();
+        await loadCategories();
+        
+        // Forcer la synchronisation
+        try {
+          await fetch('/api/cache/invalidate', { method: 'POST' });
+        } catch (e) {
+          console.error('Erreur invalidation cache:', e);
+        }
       } else {
-        alert('Erreur lors de la sauvegarde');
+        const errorText = await response.text();
+        console.error('❌ Erreur sauvegarde:', errorText);
+        alert(`Erreur: ${response.status} - ${errorText}`);
       }
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('❌ Erreur:', error);
       alert('Erreur lors de la sauvegarde');
     }
   };
