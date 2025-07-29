@@ -16,14 +16,14 @@ interface CachedData {
 class ContentCache {
   private data: any = {};
   private lastUpdate: number = 0;
-  private cacheDuration: number = 30000; // 30 secondes au lieu de 1 seconde
+  private cacheDuration: number = 1000; // 1 seconde pour synchronisation instantanée
   private isRefreshing: boolean = false; // Éviter les refresh simultanés
 
   constructor() {
     if (typeof window !== 'undefined') {
       this.loadFromLocalStorage();
       // Refresh moins fréquent et avec protection
-      setInterval(() => this.refreshIfNeeded(), 5000); // Toutes les 5 secondes au lieu de 500ms
+      setInterval(() => this.refreshIfNeeded(), 1000); // Toutes les secondes pour synchronisation instantanée
     }
   }
 
@@ -142,7 +142,14 @@ class ContentCache {
   async forceRefresh() {
     console.log('🔄 FORCE REFRESH - Récupération immédiate des données admin...');
     this.lastUpdate = 0; // Force un refresh
-    await this.refreshAll();
+    await this.refresh(); // Utiliser refresh au lieu de refreshAll
+  }
+
+  // Nouvelle méthode pour rafraîchir tout immédiatement
+  async refreshAll() {
+    console.log('🔄 REFRESH ALL - Synchronisation complète...');
+    this.invalidate(); // Vider le cache
+    await this.refresh(); // Recharger tout
   }
 
   // Obtenir les settings instantanément - TOUJOURS depuis l'API admin

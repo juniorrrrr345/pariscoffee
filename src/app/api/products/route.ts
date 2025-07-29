@@ -15,13 +15,23 @@ export async function GET() {
     const products = await productsCollection.find({ isActive: { $ne: false } }).sort({ createdAt: -1 }).toArray();
     console.log(`📦 Produits trouvés: ${products.length}`);
     
-    // JAMAIS de produits par défaut - retourner ce qu'il y a dans la base (même vide)
-    return NextResponse.json(products);
+    // Ajouter des headers pour éviter le cache et assurer la synchronisation
+    return NextResponse.json(products, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
   } catch (error) {
     console.error('❌ Erreur API Products GET:', error);
     
-    // En cas d'erreur, retourner un tableau vide - JAMAIS de fallback products
-    return NextResponse.json([]);
+    // En cas d'erreur, retourner un tableau vide
+    return NextResponse.json([], {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate'
+      }
+    });
   }
 }
 

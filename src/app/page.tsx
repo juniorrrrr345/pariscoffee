@@ -77,6 +77,13 @@ export default function HomePage() {
     };
     
     loadData();
+    
+    // Rafraîchir les données toutes les 2 secondes pour synchronisation instantanée
+    const interval = setInterval(() => {
+      loadData();
+    }, 2000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Filtrage des produits
@@ -105,7 +112,7 @@ export default function HomePage() {
               <div className="bg-black/70 backdrop-blur-md rounded-2xl p-8 sm:p-10 md:p-12 border border-white/20 shadow-2xl">
                 {/* Logo ou titre */}
                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-8 tracking-wider animate-pulse">
-                  PLUGFR1
+                  JBEL INDUSTRY
                 </h1>
                 
                 {/* Spinner amélioré */}
