@@ -24,7 +24,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
   return (
     <div 
       onClick={() => onClick(product)}
-      className="bg-gray-900 border border-white/20 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer group touch-manipulation w-full"
+      className="bg-black/60 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer group touch-manipulation w-full"
     >
       {/* Container image avec badge */}
       <div className="relative aspect-square overflow-hidden">

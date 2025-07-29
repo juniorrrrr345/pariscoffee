@@ -1,81 +1,88 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 export default function GlobalBackgroundProvider() {
-  const [backgroundApplied, setBackgroundApplied] = useState(false);
+  const lastSettingsRef = useRef<string>('');
   
   useEffect(() => {
-    // Fonction pour appliquer le background
-    const applyBackground = (settings: any) => {
-      const root = document.documentElement;
-      const body = document.body;
+    // Fonction optimisée pour appliquer le background
+    const applyBackground = (settings: any, force = false) => {
+      // Éviter les re-applications inutiles
+      const settingsString = JSON.stringify(settings);
+      if (!force && settingsString === lastSettingsRef.current) {
+        return;
+      }
+      lastSettingsRef.current = settingsString;
+      
       const backgroundImage = settings?.backgroundImage || '';
       const backgroundOpacity = settings?.backgroundOpacity || 20;
       const backgroundBlur = settings?.backgroundBlur || 5;
       
       // Configuration du background
-      const bgConfig = backgroundImage ? {
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed',
-        backgroundColor: 'black'
-      } : {
-        backgroundImage: '',
-        backgroundColor: 'black'
-      };
+      const bgStyle = backgroundImage ? `
+        background-image: url(${backgroundImage});
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-color: black;
+      ` : `
+        background-image: none;
+        background-color: black;
+      `;
       
-      // Appliquer sur HTML et BODY
-      Object.assign(root.style, bgConfig);
-      Object.assign(body.style, bgConfig);
-      
-      // Mettre à jour l'overlay
-      const overlay = document.querySelector('.global-overlay') as HTMLElement;
-      if (overlay) {
-        if (backgroundImage) {
-          overlay.style.backgroundColor = `rgba(0, 0, 0, ${backgroundOpacity / 100})`;
-          overlay.style.backdropFilter = `blur(${backgroundBlur}px)`;
-          overlay.style.display = 'block';
-        } else {
-          overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
-          overlay.style.backdropFilter = 'blur(2px)';
-        }
+      // Créer ou mettre à jour la feuille de style
+      let styleElement = document.getElementById('dynamic-background-style');
+      if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = 'dynamic-background-style';
+        document.head.appendChild(styleElement);
       }
       
-      // Appliquer sur tous les conteneurs principaux
-      document.querySelectorAll('.main-container').forEach((container) => {
-        Object.assign((container as HTMLElement).style, bgConfig);
-      });
+      // Appliquer les styles globalement
+      styleElement.textContent = `
+        html, body, .main-container {
+          ${bgStyle}
+        }
+        
+        .global-overlay {
+          background-color: rgba(0, 0, 0, ${backgroundImage ? backgroundOpacity / 100 : 0.2});
+          backdrop-filter: blur(${backgroundImage ? backgroundBlur : 2}px);
+          -webkit-backdrop-filter: blur(${backgroundImage ? backgroundBlur : 2}px);
+          display: block;
+        }
+      `;
     };
     
-    // 1. D'abord essayer de charger depuis localStorage pour être instantané
-    const cachedSettings = localStorage.getItem('shopSettings');
-    if (cachedSettings) {
-      try {
+    // 1. Charger depuis localStorage immédiatement
+    try {
+      const cachedSettings = localStorage.getItem('shopSettings');
+      if (cachedSettings) {
         const settings = JSON.parse(cachedSettings);
-        applyBackground(settings);
-        setBackgroundApplied(true);
-      } catch (e) {
-        console.error('Erreur parsing settings cache:', e);
+        applyBackground(settings, true);
       }
+    } catch (e) {
+      console.error('Erreur parsing settings cache:', e);
     }
     
-    // 2. Ensuite charger depuis l'API pour avoir les dernières données
-    fetch('/api/settings', { cache: 'no-store' })
+    // 2. Charger depuis l'API
+    let mounted = true;
+    fetch('/api/settings', { 
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' }
+    })
       .then(res => res.json())
       .then(settings => {
-        // Sauvegarder dans localStorage pour le prochain chargement
+        if (!mounted) return;
         localStorage.setItem('shopSettings', JSON.stringify(settings));
         applyBackground(settings);
-        setBackgroundApplied(true);
       })
       .catch(error => {
         console.error('Erreur chargement settings:', error);
       });
     
-    // 3. Écouter les changements de settings en temps réel
+    // 3. Écouter les changements de settings
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'shopSettings' && e.newValue) {
         try {
@@ -91,13 +98,14 @@ export default function GlobalBackgroundProvider() {
     const handleSettingsUpdate = (event: CustomEvent) => {
       const settings = event.detail;
       localStorage.setItem('shopSettings', JSON.stringify(settings));
-      applyBackground(settings);
+      applyBackground(settings, true);
     };
     
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('settingsUpdated' as any, handleSettingsUpdate as any);
     
     return () => {
+      mounted = false;
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('settingsUpdated' as any, handleSettingsUpdate as any);
     };

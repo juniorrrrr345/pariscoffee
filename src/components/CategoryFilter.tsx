@@ -39,7 +39,7 @@ export default function CategoryFilter({
   }, []);
 
   return (
-    <div className="sticky top-0 z-30 bg-black/40 backdrop-blur-lg border-b border-white/10 pt-2 sm:pt-3">
+    <div className="sticky top-0 z-30 bg-black/60 backdrop-blur-md border-b border-white/10 pt-2 sm:pt-3">
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-4 sm:p-5 max-w-7xl mx-auto">
         {/* Dropdown Catégories - Design premium */}
         <div className="relative flex-1" ref={categoryRef}>

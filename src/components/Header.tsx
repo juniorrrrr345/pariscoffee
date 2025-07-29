@@ -82,7 +82,7 @@ export default function Header() {
   };
 
   return (
-    <header className="fixed top-0 w-full z-40 bg-black/95 backdrop-blur-sm safe-area-padding">
+    <header className="fixed top-0 w-full z-40 bg-black/80 backdrop-blur-sm safe-area-padding">
       {/* Texte défilant - depuis l'admin */}
       {settings.scrollingText && settings.scrollingText.trim() && (
         <div className="bg-black/80 backdrop-blur-sm text-white py-0.5 overflow-hidden relative border-b border-white/10">
