@@ -1,6 +1,6 @@
 # JBEL INDUSTRY Shop - Boutique E-commerce Moderne
 
-<!-- Deploy: 2025-01-29 19:39 -->
+<!-- Deploy: 2025-01-29 19:47 - Force redeploy with all features -->
 
 Une boutique e-commerce moderne et élégante avec panel d'administration complet.
 
