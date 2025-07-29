@@ -1,19 +1,19 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
 
 import CategoryFilter from '../components/CategoryFilter';
 import ProductCard, { Product } from '../components/ProductCard';
 import ProductDetail from '../components/ProductDetail';
 import BottomNav from '../components/BottomNav';
-import InfoPage from '../components/InfoPage';
-import ContactPage from '../components/ContactPage';
 import contentCache from '../lib/contentCache';
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('Toutes les catégories');
   const [selectedFarm, setSelectedFarm] = useState('Toutes les farms');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [activeTab, setActiveTab] = useState('menu');
+  const router = useRouter();
   
   // Remettre le chargement initial
   const [loading, setLoading] = useState(true);
@@ -108,9 +108,17 @@ export default function HomePage() {
   });
 
   const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-    if (tabId === 'menu') {
-      setSelectedProduct(null);
+    if (tabId === 'social') {
+      router.push('/social');
+    } else if (tabId === 'infos') {
+      router.push('/info');
+    } else if (tabId === 'contact') {
+      router.push('/contact');
+    } else {
+      setActiveTab(tabId);
+      if (tabId === 'menu') {
+        setSelectedProduct(null);
+      }
     }
   };
 
@@ -184,14 +192,7 @@ export default function HomePage() {
       
       {/* Contenu principal avec navigation */}
       <div className="content-layer">
-        {/* Affichage conditionnel des pages */}
-        {activeTab === 'infos' ? (
-          <InfoPage onClose={() => setActiveTab('menu')} />
-        ) : activeTab === 'contact' ? (
-          <ContactPage onClose={() => setActiveTab('menu')} />
-        ) : (
-          <>
-            <Header />
+        <Header />
             
             {selectedProduct ? (
               <ProductDetail 
@@ -257,9 +258,6 @@ export default function HomePage() {
                 </main>
               </div>
             )}
-          </>
-        )}
-
       </div>
       
       {/* BottomNav toujours visible - en dehors du content-layer */}

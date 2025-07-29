@@ -48,10 +48,7 @@ interface BottomNavProps {
 
 export default function BottomNav({ activeTab = 'menu', onTabChange }: BottomNavProps) {
   const handleTabClick = (tabId: string) => {
-    if (tabId === 'social') {
-      // Ouvrir la page des réseaux sociaux
-      window.location.href = '/social';
-    } else if (onTabChange) {
+    if (onTabChange) {
       onTabChange(tabId);
     }
   };

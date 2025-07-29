@@ -1,20 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import ContactPage from '@/components/ContactPage';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 
 export default function ContactPageRoute() {
   const [activeTab] = useState('contact');
+  const router = useRouter();
 
   const handleTabChange = (tabId: string) => {
     if (tabId === 'menu') {
-      window.location.href = '/';
+      router.push('/');
     } else if (tabId === 'infos') {
-      window.location.href = '/info';
+      router.push('/info');
     } else if (tabId === 'social') {
-      window.location.href = '/social';
+      router.push('/social');
     }
   };
 

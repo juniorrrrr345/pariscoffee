@@ -1,20 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import InfoPage from '@/components/InfoPage';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 
 export default function InfoPageRoute() {
   const [activeTab] = useState('infos');
+  const router = useRouter();
 
   const handleTabChange = (tabId: string) => {
     if (tabId === 'menu') {
-      window.location.href = '/';
+      router.push('/');
     } else if (tabId === 'contact') {
-      window.location.href = '/contact';
+      router.push('/contact');
     } else if (tabId === 'social') {
-      window.location.href = '/social';
+      router.push('/social');
     }
   };
 

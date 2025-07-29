@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 
@@ -25,8 +26,8 @@ interface Settings {
 export default function SocialPage() {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('social');
+  const router = useRouter();
 
   useEffect(() => {
     loadData();
@@ -52,18 +53,16 @@ export default function SocialPage() {
       }
     } catch (error) {
       console.error('Erreur chargement données:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleTabChange = (tabId: string) => {
     if (tabId === 'menu') {
-      window.location.href = '/';
+      router.push('/');
     } else if (tabId === 'infos') {
-      window.location.href = '/info';
+      router.push('/info');
     } else if (tabId === 'contact') {
-      window.location.href = '/contact';
+      router.push('/contact');
     }
   };
 
@@ -92,23 +91,7 @@ export default function SocialPage() {
               </p>
             </div>
 
-            {loading ? (
-              // Écran de chargement cohérent avec la boutique
-              <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6">
-                    <div className="absolute inset-0 border-4 border-white/20 rounded-full"></div>
-                    <div className="absolute inset-0 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                  <h2 className="shop-title text-xl sm:text-2xl font-bold text-white mb-2">
-                    {settings?.shopTitle || 'JBEL INDUSTRY'}
-                  </h2>
-                  <p className="text-gray-400 text-sm animate-pulse">
-                    {settings?.loadingText || 'Chargement...'}
-                  </p>
-                </div>
-              </div>
-            ) : socialLinks.length > 0 ? (
+            {socialLinks.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {socialLinks.map((link) => (
                   <a
@@ -152,11 +135,11 @@ export default function SocialPage() {
               </div>
             )}
 
-            {/* Section contact plus discrète */}
+            {/* Section contact plus visible */}
             <div className="mt-12 text-center">
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 border border-white/20"
               >
                 <span>Besoin d'aide ?</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
