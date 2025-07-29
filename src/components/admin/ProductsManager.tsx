@@ -44,6 +44,7 @@ export default function ProductsManager() {
   // Ref pour maintenir le focus
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const [refreshCounter, setRefreshCounter] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -198,8 +199,16 @@ export default function ProductsManager() {
   };
 
   const handleSave = async () => {
+    console.log('🔵 Bouton sauvegarder cliqué');
+    
     if (!formData.name || !formData.farm || !formData.category) {
       alert('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+    
+    // Vérifier que nous avons bien une image
+    if (!formData.image) {
+      alert('Veuillez ajouter une image au produit');
       return;
     }
     
@@ -244,6 +253,12 @@ export default function ProductsManager() {
     
     console.log('💾 Prix à sauvegarder:', finalPrices);
     console.log('💾 Nombre de prix trouvés:', Object.keys(finalPrices).length);
+    
+    // Vérifier qu'on a au moins un prix
+    if (Object.keys(finalPrices).length === 0) {
+      alert('Veuillez définir au moins un prix pour le produit');
+      return;
+    }
 
     console.log('🔍 Debug handleSave:', {
       editingProduct: editingProduct,
@@ -251,6 +266,8 @@ export default function ProductsManager() {
       formDataSnapshot: { ...formData }
     });
 
+    setIsSaving(true);
+    
     try {
       // Utiliser les prix récupérés directement depuis les inputs
       const cleanedPrices = finalPrices;
@@ -335,6 +352,8 @@ export default function ProductsManager() {
     } catch (error) {
       console.error('Erreur:', error);
       alert('Erreur lors de la sauvegarde');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1352,9 +1371,10 @@ export default function ProductsManager() {
               <div className="flex gap-2 sm:gap-4">
                 <button
                   onClick={handleSave}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 sm:py-3 px-3 sm:px-4 lg:px-6 rounded-lg lg:rounded-xl transition-all duration-300 shadow-lg text-xs sm:text-sm lg:text-base"
+                  disabled={isSaving}
+                  className={`flex-1 ${isSaving ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-700'} text-white font-bold py-2 sm:py-3 px-3 sm:px-4 lg:px-6 rounded-lg lg:rounded-xl transition-all duration-300 shadow-lg text-xs sm:text-sm lg:text-base disabled:cursor-not-allowed`}
                 >
-                  💾 Sauvegarder
+                  {isSaving ? '⏳ Sauvegarde...' : '💾 Sauvegarder'}
                 </button>
                 <button
                   onClick={() => setShowModal(false)}
