@@ -13,7 +13,7 @@
       "memory": 1024
     }
   },
-  "regions": ["cdg1"],
+  "regions": ["iad1"],
   "framework": "nextjs",
   "headers": [
     {
