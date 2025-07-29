@@ -64,7 +64,7 @@ export default function SocialPage() {
         <Header />
         <Navigation />
         
-        <main className="container mx-auto px-4 py-8 mt-32 sm:mt-40 lg:mt-44">
+        <main className="container mx-auto px-4 py-8 mt-40 sm:mt-48 lg:mt-52">
           {/* Titre de la page avec style boutique */}
           <div className="text-center mb-12">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4">
