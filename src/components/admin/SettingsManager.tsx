@@ -7,7 +7,6 @@ interface Settings {
   bannerText: string;
   loadingText: string;
   whatsappLink: string;
-  whatsappOrderLink: string;
   deliveryInfo: string;
   qualityInfo: string;
   titleStyle: string;
@@ -24,7 +23,6 @@ export default function SettingsManager() {
     bannerText: '',
     loadingText: '',
     whatsappLink: '',
-    whatsappOrderLink: '',
     deliveryInfo: '',
     qualityInfo: '',
     titleStyle: 'glow',
@@ -53,7 +51,6 @@ export default function SettingsManager() {
           bannerText: data.bannerText || '',
           loadingText: data.loadingText || '',
           whatsappLink: data.whatsappLink || data.telegramLink || '',
-          whatsappOrderLink: data.whatsappOrderLink || data.telegramOrderLink || data.canalLink || '',
           deliveryInfo: data.deliveryInfo || '',
           qualityInfo: data.qualityInfo || '',
           titleStyle: data.titleStyle || 'glow',
@@ -238,22 +235,7 @@ export default function SettingsManager() {
               <p className="text-xs text-gray-400 mt-1">Format: https://wa.me/[code pays][numéro]</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Lien WhatsApp Commandes
-              </label>
-              <input
-                type="url"
-                value={settings.whatsappOrderLink}
-                onChange={(e) => updateField('whatsappOrderLink', e.target.value)}
-                className="w-full bg-gray-800 border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white"
-                placeholder="https://wa.me/33612345678?text=Bonjour"
-              />
-              <p className="text-xs text-gray-400 mt-1">Pour les commandes avec message pré-rempli</p>
-              <p className="text-gray-500 text-xs mt-1">
-                Lien qui s'ouvre quand on clique sur "Canal" dans la navigation
-              </p>
-            </div>
+
           </div>
         </div>
 
