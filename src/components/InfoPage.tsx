@@ -1,21 +1,18 @@
 'use client';
 import { useState, useEffect } from 'react';
-import contentCache from '../lib/contentCache';
 
 interface InfoPageProps {
   onClose: () => void;
 }
 
 export default function InfoPage({ onClose }: InfoPageProps) {
-  // Charger le contenu depuis le cache d'abord pour un affichage instantané
-  const cachedPage = contentCache.getInfoPage();
+  // NE JAMAIS charger depuis le cache - toujours depuis l'API
   const [content, setContent] = useState(
-    cachedPage?.content || 
-    '# À propos\n\nBienvenue sur notre boutique en ligne.\n\nVous pouvez modifier ce contenu depuis le panel administrateur.'
+    '# À propos\n\nChargement en cours...'
   );
 
   useEffect(() => {
-    // Mettre à jour depuis l'API en arrière-plan
+    // Charger DIRECTEMENT depuis l'API
     fetch('/api/pages/info', {
       cache: 'no-store',
       headers: {
@@ -26,15 +23,15 @@ export default function InfoPage({ onClose }: InfoPageProps) {
       .then(data => {
         if (data.content && data.content.trim()) {
           setContent(data.content);
-          // Mettre à jour le cache
-          contentCache.updateInfoPage({
-            title: data.title || 'Page Info',
-            content: data.content
-          });
+        } else {
+          // Contenu par défaut si vide
+          setContent('# À propos\n\nBienvenue sur notre boutique en ligne.\n\nVous pouvez modifier ce contenu depuis le panel administrateur.');
         }
       })
       .catch(error => {
         console.error('Erreur chargement page info:', error);
+        // Contenu par défaut en cas d'erreur
+        setContent('# À propos\n\nBienvenue sur notre boutique en ligne.\n\nVous pouvez modifier ce contenu depuis le panel administrateur.');
       });
   }, []);
 

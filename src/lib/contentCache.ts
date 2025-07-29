@@ -191,4 +191,7 @@ const contentCache = new ContentCache();
 // Export pour compatibilité avec l'ancien code
 export const instantContent = contentCache;
 
+// Export nommé pour la route API
+export { contentCache };
+
 export default contentCache;

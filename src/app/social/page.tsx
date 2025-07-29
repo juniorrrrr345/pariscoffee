@@ -24,24 +24,9 @@ interface Settings {
 }
 
 export default function SocialPage() {
-  // Initialiser avec les données du localStorage si disponibles
-  const getCachedData = () => {
-    try {
-      const cachedSocial = localStorage.getItem('socialLinks');
-      const cachedSettings = localStorage.getItem('shopSettings');
-      
-      return {
-        socialLinks: cachedSocial ? JSON.parse(cachedSocial).filter((link: SocialLink) => link.isActive) : [],
-        settings: cachedSettings ? JSON.parse(cachedSettings) : null
-      };
-    } catch (e) {
-      return { socialLinks: [], settings: null };
-    }
-  };
-  
-  const cached = getCachedData();
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(cached.socialLinks);
-  const [settings, setSettings] = useState<Settings | null>(cached.settings);
+  // NE JAMAIS charger depuis localStorage - toujours depuis l'API
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [settings, setSettings] = useState<Settings | null>(null);
   const [activeTab, setActiveTab] = useState('social');
   const router = useRouter();
 
@@ -51,32 +36,35 @@ export default function SocialPage() {
     router.prefetch('/info');
     router.prefetch('/contact');
     
-    // Charger les données fraîches en arrière-plan
+    // Charger DIRECTEMENT depuis l'API
     loadFreshData();
   }, [router]);
 
   const loadFreshData = async () => {
     try {
       const [socialResponse, settingsResponse] = await Promise.all([
-        fetch('/api/social-links', { cache: 'no-store' }),
-        fetch('/api/settings', { cache: 'no-store' })
+        fetch('/api/social-links', { 
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        }),
+        fetch('/api/settings', { 
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        })
       ]);
 
       if (socialResponse.ok) {
         const data = await socialResponse.json();
         const activeLinks = data.filter((link: SocialLink) => link.isActive);
         setSocialLinks(activeLinks);
-        // Sauvegarder dans le cache
-        localStorage.setItem('socialLinks', JSON.stringify(data));
       }
 
       if (settingsResponse.ok) {
         const settingsData = await settingsResponse.json();
         setSettings(settingsData);
-        // Déjà sauvegardé par GlobalBackgroundProvider
       }
     } catch (error) {
-      console.error('Erreur chargement données fraîches:', error);
+      console.error('Erreur chargement données:', error);
     }
   };
 
