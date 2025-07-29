@@ -112,10 +112,6 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
             {product.farm}
           </p>
           
-          {/* Badge "CURE AU TOP" - responsive */}
-          <div className="inline-flex items-center bg-gradient-to-r from-orange-500 to-red-500 text-white text-xxs sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-full">
-            CURE AU TOP 🔥
-          </div>
         </div>
 
         {/* Liste des prix - responsive */}
