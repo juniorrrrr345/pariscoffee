@@ -72,7 +72,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       result = await productsCollection.findOneAndUpdate(
         { _id: objectId },
         { $set: updateData },
-        { returnOriginal: false } // Ancienne syntaxe plus compatible
+        { returnDocument: 'after' } // Nouvelle syntaxe MongoDB
       );
       console.log('🔄 Résultat brut findOneAndUpdate:', {
         hasResult: !!result,
@@ -162,19 +162,24 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     console.log('🔍 Produit existant trouvé:', existingProduct ? 'OUI' : 'NON');
     
     if (!existingProduct) {
-      console.log('❌ Produit inexistant avec ID:', params.id);
-      // Lister quelques produits pour debug
-      const allProducts = await productsCollection.find({}).limit(3).toArray();
-      console.log('📋 Exemples produits en base:', allProducts.map(p => ({ id: p._id, name: p.name })));
-      return NextResponse.json({ error: 'Produit non trouvé en base de données' }, { status: 404 });
+      console.log('⚠️ Produit déjà supprimé ou inexistant avec ID:', params.id);
+      // Ce n'est pas une erreur si le produit n'existe pas - il est peut-être déjà supprimé
+      return NextResponse.json({ 
+        message: 'Produit déjà supprimé', 
+        productId: params.id 
+      });
     }
     
     console.log('✅ Produit existe, tentative suppression...');
     const result = await productsCollection.findOneAndDelete({ _id: objectId });
 
     if (!result.value) {
-      console.log('❌ Échec de suppression pour ID:', params.id);
-      return NextResponse.json({ error: 'Échec de la suppression - produit peut-être déjà supprimé' }, { status: 404 });
+      console.log('⚠️ Produit supprimé entre temps pour ID:', params.id);
+      // Pas une erreur - le produit a été supprimé entre temps
+      return NextResponse.json({ 
+        message: 'Produit supprimé', 
+        productId: params.id 
+      });
     }
 
     console.log('✅ Produit supprimé avec succès:', result.value.name);
