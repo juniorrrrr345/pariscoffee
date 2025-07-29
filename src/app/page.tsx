@@ -169,9 +169,9 @@ export default function HomePage() {
   };
 
   // Écran de chargement original avec fond de thème
-  if (loading && products.length === 0) {
+  if (loading) {
     return (
-      <div className="main-container" style={{ minHeight: '100vh', backgroundColor: 'black' }}>
+      <div className="main-container">
         <div className="global-overlay"></div>
         <div className="content-layer">
           <div className="min-h-screen flex items-center justify-center">
