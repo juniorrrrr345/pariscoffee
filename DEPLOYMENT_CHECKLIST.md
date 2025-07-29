@@ -44,7 +44,7 @@ git push -u origin main
 ## 🔒 Après le déploiement
 
 - [ ] **Changer le mot de passe admin** immédiatement
-- [ ] **Mettre à jour NEXTAUTH_URL** avec l'URL Vercel réelle
+- [x] **NEXTAUTH_URL mise à jour** : `https://lamainvrtr.vercel.app`
 - [ ] **Tester la connexion admin** sur `/admin`
 - [ ] **Ajouter un produit test** pour vérifier Cloudinary
 
@@ -57,9 +57,9 @@ git push -u origin main
 
 ## 📱 URLs importantes
 
-- **Boutique** : `https://votre-projet.vercel.app`
-- **Admin** : `https://votre-projet.vercel.app/admin`
-- **API Health** : `https://votre-projet.vercel.app/api/health`
+- **Boutique** : `https://lamainvrtr.vercel.app`
+- **Admin** : `https://lamainvrtr.vercel.app/admin`
+- **API Health** : `https://lamainvrtr.vercel.app/api/health`
 
 ---
 

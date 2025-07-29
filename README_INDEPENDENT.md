@@ -62,7 +62,7 @@ CLOUDINARY_API_SECRET=APJe9o-RlgaWWHq9zLQ0JztpACI
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=JuniorAdmin123
 NEXTAUTH_SECRET=QPsLBwVZRvPG7kH8gXdq3hyD9JjU4smB5rrVrEbD6hs=
-NEXTAUTH_URL=https://votre-projet.vercel.app
+NEXTAUTH_URL=https://lamainvrtr.vercel.app
 ```
 
 5. Cliquez sur "Deploy"
@@ -86,7 +86,7 @@ NEXTAUTH_URL=https://votre-projet.vercel.app
    ```bash
    openssl rand -base64 32
    ```
-3. **NEXTAUTH_URL** : Remplacez par votre URL Vercel réelle
+3. **NEXTAUTH_URL** : Déjà configuré avec `https://lamainvrtr.vercel.app`
 
 ## 📂 Structure du Projet
 
