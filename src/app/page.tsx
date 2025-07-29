@@ -23,7 +23,7 @@ export default function HomePage() {
   }, [router]);
   
   // États pour les données - Initialiser avec des valeurs par défaut
-  const [loading, setLoading] = useState(false); // Pas de chargement, tout est instantané
+  const [loading, setLoading] = useState(true); // Afficher le chargement au début
   const [products, setProducts] = useState<Product[]>(contentCache.getProducts());
   const [categories, setCategories] = useState<string[]>(() => {
     const cached = contentCache.getCategories();
@@ -84,12 +84,18 @@ export default function HomePage() {
     
     loadFreshData();
     
+    // Cacher le chargement après un court délai
+    const loadingTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 1500); // 1.5 secondes
+    
     // Rafraîchir les données toutes les 2 secondes pour synchronisation
     const interval = setInterval(() => {
       loadFreshData();
     }, 2000);
     
     return () => {
+      clearTimeout(loadingTimeout);
       clearInterval(interval);
     };
   }, []);
@@ -115,6 +121,48 @@ export default function HomePage() {
       }
     }
   };
+
+  // Écran de chargement original avec fond de thème
+  if (loading) {
+    return (
+      <div className="main-container">
+        <div className="global-overlay"></div>
+        <div className="content-layer">
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              {/* Animation de connexion */}
+              <div className="mb-8 relative">
+                <div className="inline-flex items-center gap-4 text-4xl sm:text-5xl md:text-6xl">
+                  <span className="animate-pulse">📲</span>
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                    <span className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></span>
+                    <span className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></span>
+                  </div>
+                  <span className="animate-pulse animation-delay-1000">🔌</span>
+                </div>
+              </div>
+              
+              {/* Texte de connexion */}
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 animate-pulse">
+                Connexion en cours
+              </h2>
+              
+              {/* Barre de progression */}
+              <div className="w-64 h-1 bg-white/20 rounded-full mx-auto mb-8 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-loading-bar"></div>
+              </div>
+              
+              {/* Signature discrète */}
+              <p className="text-xs text-white/40 font-light tracking-wider">
+                JUNIOR X JBEL
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
 
 
