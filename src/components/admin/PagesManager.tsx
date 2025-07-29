@@ -22,29 +22,51 @@ export default function PagesManager() {
   const loadPages = async () => {
     try {
       setIsLoading(true);
+      console.log('📄 Chargement des pages...');
+      
       const [infoRes, contactRes] = await Promise.all([
-        fetch('/api/pages/info'),
-        fetch('/api/pages/contact')
+        fetch('/api/pages/info').catch(err => {
+          console.error('Erreur fetch info:', err);
+          return { ok: false, json: () => ({ title: 'À propos', content: '' }) };
+        }),
+        fetch('/api/pages/contact').catch(err => {
+          console.error('Erreur fetch contact:', err);
+          return { ok: false, json: () => ({ title: 'Contact', content: '' }) };
+        })
       ]);
+      
+      console.log('Réponses API:', { info: infoRes.ok, contact: contactRes.ok });
       
       const [infoData, contactData] = await Promise.all([
         infoRes.json(),
         contactRes.json()
       ]);
       
+      console.log('Données reçues:', { 
+        info: infoData.title, 
+        contact: contactData.title 
+      });
+      
       setPageContent({
         info: {
-          title: infoData.title || 'Page Info',
+          title: infoData.title || 'À propos',
           content: infoData.content || ''
         },
         contact: {
-          title: contactData.title || 'Page Contact',
+          title: contactData.title || 'Contact',
           content: contactData.content || ''
         }
       });
     } catch (error) {
-      console.error('Erreur chargement:', error);
+      console.error('❌ Erreur chargement pages:', error);
       setSaveStatus('❌ Erreur de chargement');
+      
+      // Définir des valeurs par défaut en cas d'erreur
+      setPageContent({
+        info: { title: 'À propos', content: '' },
+        contact: { title: 'Contact', content: '' }
+      });
+      
       setTimeout(() => setSaveStatus(''), 3000);
     } finally {
       setIsLoading(false);
@@ -107,6 +129,18 @@ export default function PagesManager() {
 
   useEffect(() => {
     loadPages();
+    
+    // Timeout de sécurité pour éviter le chargement infini
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn('⚠️ Chargement trop long, forçage arrêt');
+        setIsLoading(false);
+        setSaveStatus('⚠️ Chargement interrompu');
+        setTimeout(() => setSaveStatus(''), 3000);
+      }
+    }, 10000); // 10 secondes max
+    
+    return () => clearTimeout(timeout);
   }, []);
 
   const currentPage = pageContent[activeTab];
