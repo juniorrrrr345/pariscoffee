@@ -23,17 +23,20 @@ export default function HomePage() {
   }, [router]);
   
   // États pour les données - Initialiser avec des valeurs par défaut
-  const [loading, setLoading] = useState(true); // TEMPORAIRE: Forcer à true pour debug
+  const [loading, setLoading] = useState(true); // Toujours true au départ
   
-  // S'assurer que hasVisited reste en sessionStorage
-  // TEMPORAIRE: Commenté pour debug
-  /*
+  // Gérer la logique de première visite côté client uniquement
   useEffect(() => {
-    if (typeof window !== 'undefined' && !loading) {
+    // Vérifier si c'est la première visite
+    const hasVisited = sessionStorage.getItem('hasVisited');
+    if (hasVisited) {
+      // Si déjà visité, cacher le chargement immédiatement
+      setLoading(false);
+    } else {
+      // Si première visite, marquer comme visité
       sessionStorage.setItem('hasVisited', 'true');
     }
-  }, [loading]);
-  */
+  }, []); // Ne s'exécute qu'une fois au montage
   
   // Charger le thème depuis l'API au démarrage
   useEffect(() => {
