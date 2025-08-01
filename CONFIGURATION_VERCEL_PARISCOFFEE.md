@@ -32,7 +32,12 @@ dvglphdty
 
 NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
 leloup_preset
+
+ADMIN_PASSWORD
+VotreMotDePasseSecurise123
 ```
+
+⚠️ **IMPORTANT** : Changez `VotreMotDePasseSecurise123` par votre propre mot de passe sécurisé !
 
 ## 🔧 Configuration Vercel
 
@@ -49,6 +54,14 @@ leloup_preset
 3. Sinon, créez un nouveau projet et importez `juniorrrrr345/pariscoffee`
 4. Ajoutez TOUTES les variables d'environnement ci-dessus
 5. Déployez !
+
+## 🔐 Accès Admin
+
+Une fois déployé, accédez au panel admin :
+- URL : https://votre-domaine.vercel.app/admin
+- Mot de passe : Celui que vous avez défini dans `ADMIN_PASSWORD`
+
+Si vous n'avez pas ajouté `ADMIN_PASSWORD` dans Vercel, le mot de passe par défaut sera : `admin123`
 
 ## ✨ Fonctionnalités de votre boutique
 
