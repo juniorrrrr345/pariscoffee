@@ -17,7 +17,7 @@ interface Product {
   isActive: boolean;
 }
 
-const defaultPriceKeys = ['3g', '5g', '10g', '25g', '50g', '100g', '200g', '500g'];
+const defaultPriceKeys: string[] = [];
 
 export default function ProductsManager() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -497,7 +497,7 @@ export default function ProductsManager() {
         console.log('📏 Quantité mise à jour:', priceKey, '→', value);
       }}
         className="w-full bg-gray-800 border border-white/20 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm"
-        placeholder="3g, 5g, 10g..."
+                      placeholder="Ex: 250g, 500g, 1kg..."
       />
     );
   }, []);
@@ -532,7 +532,7 @@ export default function ProductsManager() {
     // Si aucun prix, ajouter au moins une ligne par défaut
     if (Object.keys(allPrices).length === 0) {
       console.log('⚠️ Aucun prix trouvé, ajout d\'une ligne par défaut');
-      allPrices['3g'] = undefined;
+                  // Pas de prix par défaut
     }
     
     const result = Object.entries(allPrices);
@@ -576,7 +576,7 @@ export default function ProductsManager() {
   };
 
   const addCustomPrice = () => {
-    const customKey = prompt('Entrez la quantité (ex: 3g, 5g, 10g, 25g, 50g, 100g, 1kg, etc.):');
+                    const customKey = prompt('Entrez la quantité (ex: 250g, 500g, 1kg, etc.):');
     if (customKey && customKey.trim()) {
       addNewPrice(customKey.trim());
     }
@@ -1122,23 +1122,7 @@ export default function ProductsManager() {
                     </button>
                   </div>
                   
-                  {/* Raccourcis pour prix courants */}
-                  <div className="flex flex-wrap gap-2">
-                    {['3g', '5g', '10g', '25g', '50g', '100g', '200g', '500g', '1kg'].map(quantity => (
-                      <button
-                        key={quantity}
-                        type="button"
-                        onClick={() => {
-                          console.log(`🎯 Clic sur bouton: ${quantity}`);
-                          addNewPrice(quantity);
-                        }}
-                        className="bg-blue-600/20 border border-blue-400/30 hover:bg-blue-600/40 text-blue-300 text-xs py-1 px-2 rounded transition-all duration-200"
-                        title={`Ajouter ${quantity}`}
-                      >
-                        + {quantity}
-                      </button>
-                    ))}
-                  </div>
+                  {/* Raccourcis pour prix courants - supprimés car l'utilisateur veut gérer lui-même */}
                   <button
   type="button"
   onClick={() => {

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
-// Redéploiement forcé - Nouveau chargement JBEL INDUSTRY
+// Redéploiement forcé - Nouveau chargement PARISCOFFEE
 import CategoryFilter from '../components/CategoryFilter';
 import ProductCard, { Product } from '../components/ProductCard';
 import ProductDetail from '../components/ProductDetail';
@@ -223,45 +223,52 @@ export default function HomePage() {
         <div className="global-overlay"></div>
         <div className="content-layer">
           <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="text-center bg-black/60 backdrop-blur-md rounded-3xl p-8 sm:p-12 max-w-lg mx-auto border border-white/20">
-              {/* Logo animé moderne */}
-              <div className="mb-8">
-                <div className="relative w-40 h-40 mx-auto">
-                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full blur-2xl opacity-70 animate-pulse"></div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-full blur-xl opacity-50 animate-ping"></div>
-                  <div className="relative z-10 w-full h-full flex items-center justify-center">
-                    <span className="text-8xl animate-bounce filter drop-shadow-2xl">🔥</span>
+            <div className="text-center bg-black/60 backdrop-blur-md rounded-2xl p-6 sm:p-8 max-w-md mx-auto border border-white/20">
+              {/* Logo animé moderne avec cercle tournant */}
+              <div className="mb-6">
+                <div className="relative w-32 h-32 mx-auto">
+                  {/* Cercle tournant avec image de fond */}
+                  <div className="absolute inset-0 rounded-full overflow-hidden animate-spin-slow">
+                    <div className="w-full h-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 opacity-80"></div>
+                    {settings?.backgroundImage && (
+                      <div 
+                        className="absolute inset-2 rounded-full bg-cover bg-center"
+                        style={{ backgroundImage: `url(${settings.backgroundImage})` }}
+                      />
+                    )}
                   </div>
+                  {/* Bordure animée */}
+                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-white border-r-white/50 animate-spin"></div>
                 </div>
               </div>
               
-              {/* Titre avec effet néon et ombre */}
-              <h1 className="text-5xl sm:text-7xl font-black mb-4 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-transparent bg-clip-text animate-pulse drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">
-                JBEL INDUSTRY
+              {/* Titre avec taille réduite */}
+              <h1 className="text-3xl sm:text-4xl font-black mb-3 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-transparent bg-clip-text">
+                PARISCOFFEE
               </h1>
               
-              <p className="text-2xl text-white mb-8 font-semibold drop-shadow-lg">
+              <p className="text-lg text-white mb-6 font-medium">
                 Préparation en cours...
               </p>
               
-              {/* Nouvelle barre de chargement 3D */}
-              <div className="w-80 max-w-full mx-auto mb-8">
-                <div className="h-4 bg-white/20 rounded-full overflow-hidden border border-white/40 shadow-inner">
-                  <div className="h-full bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-full shadow-lg animate-loading-bar"></div>
+              {/* Barre de chargement plus petite */}
+              <div className="w-64 max-w-full mx-auto mb-6">
+                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-full animate-loading-bar"></div>
                 </div>
-                <div className="mt-2 text-sm text-white font-medium drop-shadow-md">Chargement...</div>
+                <div className="mt-2 text-xs text-white/80">Chargement...</div>
               </div>
               
-              {/* Animation de particules */}
-              <div className="flex justify-center gap-3 mb-8">
-                <div className="w-3 h-3 bg-yellow-400 rounded-full animate-bounce shadow-lg shadow-yellow-400/50" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-3 h-3 bg-orange-500 rounded-full animate-bounce shadow-lg shadow-orange-500/50" style={{ animationDelay: '200ms' }}></div>
-                <div className="w-3 h-3 bg-red-500 rounded-full animate-bounce shadow-lg shadow-red-500/50" style={{ animationDelay: '400ms' }}></div>
+              {/* Animation de particules plus petites */}
+              <div className="flex justify-center gap-2 mb-6">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></div>
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></div>
               </div>
               
               {/* Footer */}
               <div className="text-white text-sm font-medium drop-shadow-md">
-                <p>© 2025 JUNIOR X JBEL</p>
+                <p>© 2025 JUNIOR X PARISCOFFEE</p>
               </div>
             </div>
           </div>
