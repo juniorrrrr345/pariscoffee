@@ -6,6 +6,10 @@
 .pnp.js
 .yarn/install-state.gz
 
+# Bot Telegram
+telegram-bot/.env
+telegram-bot/node_modules/
+
 # testing
 /coverage
 
