@@ -13,7 +13,7 @@ CLOUDINARY_URL = cloudinary://293224922946996:yb9nRJW_k7toUQFbQg28T_gM9eQ@dvglph
 CLOUDINARY_CLOUD_NAME = dvglphdty
 CLOUDINARY_API_KEY = 293224922946996
 CLOUDINARY_API_SECRET = yb9nRJW_k7toUQFbQg28T_gM9eQ
-CLOUDINARY_UPLOAD_PRESET = ml_default
+CLOUDINARY_UPLOAD_PRESET = leloup_preset
 ```
 
 ## 🚀 Comment configurer sur Vercel
@@ -46,7 +46,7 @@ CLOUDINARY_UPLOAD_PRESET = ml_default
 
 3. **Créez un nouveau preset** :
    - Cliquez sur "Add upload preset"
-   - Nom du preset : `ml_default` (ou un autre nom de votre choix)
+   - Nom du preset : `leloup_preset` (votre preset existant)
    - Signing Mode : **Unsigned** (pour les uploads côté client)
    
 4. **Configuration recommandée** :
