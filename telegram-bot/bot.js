@@ -570,17 +570,17 @@ bot.on('callback_query', async (callbackQuery) => {
                 
                 // Créer le contenu du fichier avec des statistiques
                 const exportDate = new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });
-                const totalUsers = users.size;
-                const totalAdmins = admins.size;
-                const regularUsers = totalUsers - totalAdmins;
+                const totalUsersExport = users.size;
+                const totalAdminsExport = admins.size;
+                const regularUsersExport = totalUsersExport - totalAdminsExport;
                 
                 const fileContent = `📊 EXPORT DES UTILISATEURS DU BOT\n` +
                     `📅 Date d'export: ${exportDate}\n` +
                     `============================\n\n` +
                     `STATISTIQUES:\n` +
-                    `- Total utilisateurs: ${totalUsers}\n` +
-                    `- Utilisateurs réguliers: ${regularUsers}\n` +
-                    `- Administrateurs: ${totalAdmins}\n` +
+                    `- Total utilisateurs: ${totalUsersExport}\n` +
+                    `- Utilisateurs réguliers: ${regularUsersExport}\n` +
+                    `- Administrateurs: ${totalAdminsExport}\n` +
                     `============================\n\n` +
                     `LISTE DÉTAILLÉE:\n\n` +
                     usersDetails.join('\n\n');
@@ -819,10 +819,10 @@ bot.on('message', async (msg) => {
                     }
                 }
                 
-                const totalUsers = users.size - admins.size; // Exclure tous les admins
+                const totalUsersBroadcast = users.size - admins.size; // Exclure tous les admins
                 delete userStates[userId];
                 await updateMessage(chatId, userState.messageId, 
-                    `✅ Message diffusé!\n\n📊 Statistiques:\n👥 Utilisateurs totaux: ${totalUsers}\n✅ Envoyés: ${successCount}\n❌ Échecs: ${failCount}`, {
+                    `✅ Message diffusé!\n\n📊 Statistiques:\n👥 Utilisateurs totaux: ${totalUsersBroadcast}\n✅ Envoyés: ${successCount}\n❌ Échecs: ${failCount}`, {
                     reply_markup: getAdminKeyboard()
                 });
                 break;
