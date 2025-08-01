@@ -235,51 +235,51 @@ export default function HomePage() {
         <div className="global-overlay"></div>
         <div className="content-layer">
           <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="text-center bg-black/60 backdrop-blur-md rounded-2xl p-6 sm:p-8 max-w-md mx-auto border border-white/20">
+            <div className="text-center bg-black/80 backdrop-blur-md rounded-2xl p-6 sm:p-8 max-w-md mx-auto border border-gray-600">
               {/* Logo animé moderne avec cercle tournant */}
               <div className="mb-6">
                 <div className="relative w-32 h-32 mx-auto">
-                  {/* Cercle tournant avec image de fond */}
+                  {/* Cercle tournant en noir et blanc */}
                   <div className="absolute inset-0 rounded-full overflow-hidden animate-spin-slow">
-                    <div className="w-full h-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 opacity-80"></div>
+                    <div className="w-full h-full bg-gradient-to-r from-gray-300 via-gray-500 to-gray-700"></div>
                     {settings?.backgroundImage && (
                       <div 
-                        className="absolute inset-2 rounded-full bg-cover bg-center"
+                        className="absolute inset-2 rounded-full bg-cover bg-center grayscale"
                         style={{ backgroundImage: `url(${settings.backgroundImage})` }}
                       />
                     )}
                   </div>
                   {/* Bordure animée */}
-                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-white border-r-white/50 animate-spin"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-gray-400 border-r-gray-300 animate-spin"></div>
                 </div>
               </div>
               
-              {/* Titre avec taille réduite */}
-              <h1 className="text-3xl sm:text-4xl font-black mb-3 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-transparent bg-clip-text">
+              {/* Titre en noir et blanc */}
+              <h1 className="text-3xl sm:text-4xl font-black mb-3 text-gray-300">
                 PARISCOFFEE
               </h1>
               
-              <p className="text-lg text-white mb-6 font-medium">
+              <p className="text-lg text-gray-400 mb-6 font-medium">
                 Préparation en cours...
               </p>
               
-              {/* Barre de chargement plus petite */}
+              {/* Barre de chargement en noir et blanc */}
               <div className="w-64 max-w-full mx-auto mb-6">
-                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-full animate-loading-bar"></div>
+                <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-gray-400 via-gray-500 to-gray-600 rounded-full animate-loading-bar"></div>
                 </div>
-                <div className="mt-2 text-xs text-white/80">Chargement...</div>
+                <div className="mt-2 text-xs text-gray-500">Chargement...</div>
               </div>
               
-              {/* Animation de particules plus petites */}
+              {/* Animation de particules en noir et blanc */}
               <div className="flex justify-center gap-2 mb-6">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></div>
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></div>
+                <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></div>
               </div>
               
               {/* Footer */}
-              <div className="text-white text-sm font-medium drop-shadow-md">
+              <div className="text-gray-500 text-sm font-medium">
                 <p>© 2025 JUNIOR X PARISCOFFEE</p>
               </div>
             </div>
