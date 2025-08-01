@@ -13,6 +13,10 @@ node_modules/
 # Testing
 /coverage
 
+# Next.js
+/.next/
+/out/
+
 # Production
 /build
 /dist
@@ -32,3 +36,7 @@ yarn-error.log*
 # IDE
 .vscode/
 .idea/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
