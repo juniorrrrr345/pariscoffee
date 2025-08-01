@@ -1,27 +1,17 @@
 // Cache global pour avoir les données admin instantanément disponibles
-interface CachedData {
-  settings?: any;
-  infoPage?: any;
-  contactPage?: any;
-  socialLinks?: any[];
-  products?: any[];
-  categories?: any[];
-  farms?: any[];
-  pages?: {
-    info?: { title: string; content: string };
-    contact?: { title: string; content: string };
-  };
-}
 
 export class ContentCache {
-  private cache: Map<string, CacheEntry> = new Map();
-  private refreshPromises: Map<string, Promise<any>> = new Map();
-  private pollingInterval: NodeJS.Timeout | null = null;
+  private data: any = {};
+  private lastUpdate: number = 0;
+  private cacheDuration: number = 500; // 0.5 seconde pour synchronisation ultra rapide
+  private isRefreshing: boolean = false;
   
   constructor() {
     if (typeof window !== 'undefined') {
-      // Démarrer le polling côté client pour la synchronisation temps réel
-      this.startPolling();
+      // Charger immédiatement depuis l'API
+      this.forceRefresh();
+      // Rafraîchir très fréquemment
+      setInterval(() => this.forceRefresh(), 500); // Toutes les 0.5 secondes
     }
   }
   
@@ -170,6 +160,11 @@ export class ContentCache {
       localStorage.removeItem('contentCache');
     }
   }
+  
+  // Nouvelle méthode refreshAll
+  async refreshAll() {
+    await this.forceRefresh();
+  }
 
   // Obtenir le timestamp de la dernière mise à jour
   getLastUpdate() {
@@ -181,44 +176,7 @@ export class ContentCache {
     return (Date.now() - this.lastUpdate) < this.cacheDuration;
   }
 
-  // Nouvelle méthode pour le polling
-  private startPolling() {
-    // Vérifier les mises à jour toutes les 5 secondes
-    this.pollingInterval = setInterval(() => {
-      this.checkForUpdates();
-    }, 5000);
-  }
 
-  private async checkForUpdates() {
-    try {
-      const response = await fetch('/api/cache/check-updates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          lastCheck: new Date().toISOString() 
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.hasUpdates) {
-          console.log('🔄 Mises à jour détectées, rafraîchissement...');
-          this.invalidate();
-          await this.refreshAll();
-        }
-      }
-    } catch (error) {
-      console.error('Erreur lors de la vérification des mises à jour:', error);
-    }
-  }
-
-  // Nettoyer le polling
-  public stopPolling() {
-    if (this.pollingInterval) {
-      clearInterval(this.pollingInterval);
-      this.pollingInterval = null;
-    }
-  }
 }
 
 // Instance singleton
