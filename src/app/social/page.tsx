@@ -1,7 +1,8 @@
+'use client';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
-import { connectToDatabase } from '@/lib/mongodb-fixed';
 
 interface SocialLink {
   _id: string;
@@ -20,39 +21,68 @@ interface Settings {
   whatsappLink: string;
 }
 
-async function getSocialData() {
-  try {
-    const { db } = await connectToDatabase();
-    
-    const [socialLinks, settings] = await Promise.all([
-      db.collection('socialLinks').find({ isActive: true }).toArray(),
-      db.collection('settings').findOne({})
-    ]);
-    
-    return {
-      socialLinks: socialLinks as SocialLink[],
-      settings: settings as Settings | null
-    };
-  } catch (error) {
-    console.error('Erreur chargement social:', error);
-    return {
-      socialLinks: [],
-      settings: null
-    };
-  }
-}
+export default function SocialPage() {
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export default async function SocialPage() {
-  // Charger les données côté serveur
-  const { socialLinks, settings } = await getSocialData();
+  useEffect(() => {
+    // Charger depuis localStorage d'abord pour affichage instantané
+    const loadFromCache = () => {
+      try {
+        const cachedSettings = localStorage.getItem('shopSettings');
+        const cachedLinks = localStorage.getItem('socialLinks');
+        
+        if (cachedSettings) {
+          setSettings(JSON.parse(cachedSettings));
+        }
+        if (cachedLinks) {
+          setSocialLinks(JSON.parse(cachedLinks));
+        }
+      } catch (e) {
+        console.error('Erreur cache:', e);
+      }
+    };
 
-  // Structure cohérente avec la boutique principale
+    loadFromCache();
+
+    // Puis charger les données fraîches
+    const loadFreshData = async () => {
+      try {
+        const [linksRes, settingsRes] = await Promise.all([
+          fetch('/api/social-links', { cache: 'no-store' }),
+          fetch('/api/settings', { cache: 'no-store' })
+        ]);
+
+        if (linksRes.ok) {
+          const links = await linksRes.json();
+          setSocialLinks(links);
+          localStorage.setItem('socialLinks', JSON.stringify(links));
+        }
+
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          setSettings(settingsData);
+          localStorage.setItem('shopSettings', JSON.stringify(settingsData));
+        }
+      } catch (error) {
+        console.error('Erreur chargement:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFreshData();
+
+    // Rafraîchir toutes les secondes pour synchronisation temps réel
+    const interval = setInterval(loadFreshData, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="main-container">
-      {/* Overlay global toujours présent */}
       <div className="global-overlay"></div>
       
-      {/* Contenu principal */}
       <div className="content-layer">
         <Header />
         
@@ -60,7 +90,6 @@ export default async function SocialPage() {
           <div className="h-4 sm:h-6"></div>
           
           <main className="pt-4 pb-24 sm:pb-28 px-3 sm:px-4 lg:px-6 xl:px-8 max-w-7xl mx-auto">
-            {/* Titre de la page avec style boutique */}
             <div className="text-center mb-8 sm:mb-12">
               <h1 className="shop-title text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white mb-3">
                 Nos Réseaux
@@ -73,7 +102,7 @@ export default async function SocialPage() {
 
             {socialLinks.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                {socialLinks.map((link) => (
+                {socialLinks.filter(link => link.isActive).map((link) => (
                   <a
                     key={link._id}
                     href={link.url}
@@ -81,7 +110,6 @@ export default async function SocialPage() {
                     rel="noopener noreferrer"
                     className="group relative overflow-hidden rounded-xl transition-all duration-300 transform hover:scale-105 bg-gray-900/50 backdrop-blur-sm border border-white/10 hover:border-white/20"
                   >
-                    {/* Effet de hover */}
                     <div 
                       className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
                       style={{
@@ -90,15 +118,12 @@ export default async function SocialPage() {
                     />
                     
                     <div className="relative p-4 sm:p-6 text-center">
-                      {/* Icône */}
                       <div className="text-2xl sm:text-3xl mb-2">{link.icon}</div>
                       
-                      {/* Nom du réseau */}
                       <h3 className="text-sm sm:text-base font-semibold text-white mb-2 truncate">
                         {link.name}
                       </h3>
                       
-                      {/* Petit indicateur de couleur */}
                       <div 
                         className="w-8 h-1 mx-auto rounded-full"
                         style={{ backgroundColor: link.color }}
@@ -115,7 +140,6 @@ export default async function SocialPage() {
               </div>
             )}
 
-            {/* Section contact plus visible */}
             {settings?.whatsappLink && (
               <div className="mt-12 sm:mt-16 text-center">
                 <h2 className="text-xl sm:text-2xl font-bold text-white mb-6">
@@ -136,7 +160,6 @@ export default async function SocialPage() {
         </div>
       </div>
       
-      {/* BottomNav toujours visible */}
       <BottomNav />
     </div>
   );
