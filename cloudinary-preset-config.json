@@ -1,0 +1,37 @@
+{
+  "upload_preset": "coffee_uploads",
+  "unsigned": true,
+  "folder": "coffee/products",
+  "allowed_formats": ["jpg", "jpeg", "png", "gif", "webp"],
+  "max_file_size": 10485760,
+  "transformation": [
+    {
+      "quality": "auto:good",
+      "format": "auto",
+      "width": 1200,
+      "height": 1200,
+      "crop": "limit"
+    }
+  ],
+  "eager": [
+    {
+      "width": 200,
+      "height": 200,
+      "crop": "thumb",
+      "quality": "auto"
+    },
+    {
+      "width": 500,
+      "height": 500,
+      "crop": "fill",
+      "quality": "auto"
+    }
+  ],
+  "tags": ["coffee", "product", "menu"],
+  "unique_filename": true,
+  "overwrite": false,
+  "faces": false,
+  "context": {
+    "caption": "Coffee product image"
+  }
+}
