@@ -617,3 +617,65 @@ html, body {
   background-repeat: no-repeat;
   min-height: 100vh;
 }
+
+/* Responsive optimisé pour tous les appareils */
+@media (max-width: 640px) {
+  /* Téléphone et mini app Telegram */
+  .main-container {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+  
+  /* Ajustements pour mini app Telegram */
+  .telegram-app {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Textes plus petits sur mobile */
+  .text-responsive-xs { font-size: 0.75rem; }
+  .text-responsive-sm { font-size: 0.875rem; }
+  .text-responsive-base { font-size: 1rem; }
+  .text-responsive-lg { font-size: 1.25rem; }
+  .text-responsive-xl { font-size: 1.5rem; }
+  .text-responsive-2xl { font-size: 1.875rem; }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Tablette */
+  .text-responsive-xs { font-size: 0.875rem; }
+  .text-responsive-sm { font-size: 1rem; }
+  .text-responsive-base { font-size: 1.125rem; }
+  .text-responsive-lg { font-size: 1.5rem; }
+  .text-responsive-xl { font-size: 2rem; }
+  .text-responsive-2xl { font-size: 2.5rem; }
+}
+
+@media (min-width: 1025px) {
+  /* PC */
+  .text-responsive-xs { font-size: 1rem; }
+  .text-responsive-sm { font-size: 1.125rem; }
+  .text-responsive-base { font-size: 1.25rem; }
+  .text-responsive-lg { font-size: 1.875rem; }
+  .text-responsive-xl { font-size: 2.5rem; }
+  .text-responsive-2xl { font-size: 3rem; }
+}
+
+/* Grille responsive optimisée */
+@media (max-width: 480px) {
+  /* Très petit écran / Telegram mini app */
+  .grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Safe areas pour iOS et Android */
+.safe-area-padding {
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

@@ -335,8 +335,10 @@ export default function HomePage() {
             )}
       </div>
       
-      {/* BottomNav toujours visible - en dehors du content-layer */}
-      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+      {/* BottomNav - caché quand un produit est sélectionné */}
+      {!selectedProduct && (
+        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+      )}
     </div>
   );
 }

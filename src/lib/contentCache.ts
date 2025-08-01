@@ -13,18 +13,15 @@ interface CachedData {
   };
 }
 
-class ContentCache {
-  private data: any = {};
-  private lastUpdate: number = 0;
-  private cacheDuration: number = 500; // 0.5 seconde pour synchronisation ultra rapide
-  private isRefreshing: boolean = false;
-
+export class ContentCache {
+  private cache: Map<string, CacheEntry> = new Map();
+  private refreshPromises: Map<string, Promise<any>> = new Map();
+  private pollingInterval: NodeJS.Timeout | null = null;
+  
   constructor() {
     if (typeof window !== 'undefined') {
-      // Charger immédiatement depuis l'API
-      this.forceRefresh();
-      // Rafraîchir très fréquemment
-      setInterval(() => this.forceRefresh(), 500); // Toutes les 0.5 secondes
+      // Démarrer le polling côté client pour la synchronisation temps réel
+      this.startPolling();
     }
   }
   
@@ -182,6 +179,45 @@ class ContentCache {
   // Vérifier si le cache est frais
   isFresh() {
     return (Date.now() - this.lastUpdate) < this.cacheDuration;
+  }
+
+  // Nouvelle méthode pour le polling
+  private startPolling() {
+    // Vérifier les mises à jour toutes les 5 secondes
+    this.pollingInterval = setInterval(() => {
+      this.checkForUpdates();
+    }, 5000);
+  }
+
+  private async checkForUpdates() {
+    try {
+      const response = await fetch('/api/cache/check-updates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          lastCheck: new Date().toISOString() 
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.hasUpdates) {
+          console.log('🔄 Mises à jour détectées, rafraîchissement...');
+          this.invalidate();
+          await this.refreshAll();
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la vérification des mises à jour:', error);
+    }
+  }
+
+  // Nettoyer le polling
+  public stopPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
   }
 }
 

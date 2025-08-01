@@ -51,10 +51,8 @@ export default function CategoryFilter({
                           className="w-full bg-black/30 hover:bg-black/50 border border-white/20 hover:border-white/30 text-white py-2.5 sm:py-3 lg:py-3.5 px-3 sm:px-4 lg:px-5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-medium sm:font-semibold transition-all duration-300 flex items-center justify-between backdrop-blur-md group"
           >
                           <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-md sm:rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-blue-500/50 transition-all">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-blue-500/50 transition-all">
+                  <span className="text-white text-xs sm:text-sm font-bold">C</span>
                 </div>
                 <span className="truncate text-sm sm:text-base">{selectedCategory}</span>
               </div>
@@ -64,7 +62,7 @@ export default function CategoryFilter({
           </button>
           
           {showCategories && (
-            <div className="absolute top-full left-0 right-0 mt-3 bg-gradient-to-b from-gray-900 to-black backdrop-blur-2xl rounded-2xl shadow-2xl z-[9999] border border-blue-500/20 overflow-hidden animate-fadeIn">
+            <div className="absolute top-full left-0 right-0 mt-3 bg-black/95 backdrop-blur-2xl rounded-2xl shadow-2xl z-[9999] border border-blue-500/20 overflow-hidden animate-fadeIn">
               {/* En-tête du dropdown */}
               <div className="px-5 py-4 bg-gradient-to-r from-blue-600/30 to-purple-600/30 border-b border-blue-500/20">
                 <div className="flex items-center justify-between">
@@ -113,10 +111,8 @@ export default function CategoryFilter({
             className="w-full bg-black/30 hover:bg-black/50 border border-white/20 hover:border-white/30 text-white py-2.5 sm:py-3 lg:py-3.5 px-3 sm:px-4 lg:px-5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-medium sm:font-semibold transition-all duration-300 flex items-center justify-between backdrop-blur-md group"
           >
                           <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-md sm:rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-green-500/50 transition-all">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-green-500/50 transition-all">
+                  <span className="text-white text-xs sm:text-sm font-bold">F</span>
                 </div>
                 <span className="truncate text-sm sm:text-base">{selectedFarm}</span>
               </div>
@@ -126,7 +122,7 @@ export default function CategoryFilter({
           </button>
           
           {showFarms && (
-            <div className="absolute top-full left-0 right-0 mt-3 bg-gradient-to-b from-gray-900 to-black backdrop-blur-2xl rounded-2xl shadow-2xl z-[9999] border border-green-500/20 overflow-hidden animate-fadeIn">
+            <div className="absolute top-full left-0 right-0 mt-3 bg-black/95 backdrop-blur-2xl rounded-2xl shadow-2xl z-[9999] border border-green-500/20 overflow-hidden animate-fadeIn">
               {/* En-tête du dropdown */}
               <div className="px-5 py-4 bg-gradient-to-r from-green-600/30 to-emerald-600/30 border-b border-green-500/20">
                 <div className="flex items-center justify-between">

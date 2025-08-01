@@ -101,6 +101,20 @@ export default function RootLayout({
             `
           }}
         />
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            // Détection Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+              document.documentElement.classList.add('telegram-app');
+              // Expand to fullscreen
+              window.Telegram.WebApp.expand();
+            }
+            // Détection mobile
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+              document.documentElement.classList.add('mobile-device');
+            }
+          `
+        }} />
       </head>
       <body className={`${inter.className} antialiased`} suppressHydrationWarning style={{ backgroundColor: 'black' }}>
         <GlobalBackgroundProvider />
