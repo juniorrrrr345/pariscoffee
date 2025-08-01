@@ -24,6 +24,17 @@ export default function HomePage() {
   
   // États pour les données - Initialiser avec des valeurs par défaut
   const [loading, setLoading] = useState(true); // Toujours true au départ
+  const [settings, setSettings] = useState<any>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('shopSettings');
+        return saved ? JSON.parse(saved) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
   
   // Gérer la logique de première visite côté client uniquement
   useEffect(() => {
@@ -45,18 +56,19 @@ export default function HomePage() {
         // Charger les paramètres depuis l'API pour les nouveaux visiteurs
         const settingsRes = await fetch('/api/settings', { cache: 'no-store' });
         if (settingsRes.ok) {
-          const settings = await settingsRes.json();
+          const settingsData = await settingsRes.json();
+          setSettings(settingsData);
           
           // Sauvegarder dans localStorage pour les prochaines visites
-          localStorage.setItem('shopSettings', JSON.stringify(settings));
+          localStorage.setItem('shopSettings', JSON.stringify(settingsData));
           
           // Appliquer le thème immédiatement
-          if (settings.backgroundImage) {
+          if (settingsData.backgroundImage) {
             const style = document.createElement('style');
             style.id = 'dynamic-theme-new-visitor';
             style.textContent = `
               html, body, .main-container {
-                background-image: url(${settings.backgroundImage}) !important;
+                background-image: url(${settingsData.backgroundImage}) !important;
                 background-size: cover !important;
                 background-position: center !important;
                 background-repeat: no-repeat !important;
