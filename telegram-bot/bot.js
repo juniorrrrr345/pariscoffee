@@ -4,6 +4,45 @@ const fs = require('fs-extra');
 const path = require('path');
 const { loadConfig, saveConfig, getImagePath, IMAGES_DIR } = require('./config');
 const { getMainKeyboard, getAdminKeyboard, getSocialManageKeyboard, getSocialLayoutKeyboard, getConfirmKeyboard } = require('./keyboards');
+const mongoose = require('mongoose');
+
+// Configuration MongoDB
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://coffeelivraison4:FCiljtFGv5iKaKL3@pariscoffee.x0f0tsy.mongodb.net/?retryWrites=true&w=majority&appName=Pariscoffee';
+
+// Schémas MongoDB pour le bot
+const botUserSchema = new mongoose.Schema({
+    userId: { type: Number, required: true, unique: true },
+    username: String,
+    firstName: String,
+    lastName: String,
+    isAdmin: { type: Boolean, default: false },
+    joinedAt: { type: Date, default: Date.now },
+    lastActive: { type: Date, default: Date.now }
+});
+
+const botConfigSchema = new mongoose.Schema({
+    key: { type: String, required: true, unique: true },
+    value: mongoose.Schema.Types.Mixed,
+    updatedAt: { type: Date, default: Date.now }
+});
+
+const botMessageSchema = new mongoose.Schema({
+    messageId: String,
+    userId: Number,
+    text: String,
+    type: String,
+    sentAt: { type: Date, default: Date.now }
+});
+
+// Modèles MongoDB
+const BotUser = mongoose.model('BotUser', botUserSchema);
+const BotConfig = mongoose.model('BotConfig', botConfigSchema);
+const BotMessage = mongoose.model('BotMessage', botMessageSchema);
+
+// Connexion à MongoDB
+mongoose.connect(MONGODB_URI)
+    .then(() => console.log('✅ Bot connecté à MongoDB'))
+    .catch(err => console.error('❌ Erreur connexion MongoDB:', err));
 
 // Vérifier les variables d'environnement
 if (!process.env.BOT_TOKEN) {
