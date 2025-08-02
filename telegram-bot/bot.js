@@ -4,45 +4,6 @@ const fs = require('fs-extra');
 const path = require('path');
 const { loadConfig, saveConfig, getImagePath, IMAGES_DIR } = require('./config');
 const { getMainKeyboard, getAdminKeyboard, getSocialManageKeyboard, getSocialLayoutKeyboard, getConfirmKeyboard } = require('./keyboards');
-const mongoose = require('mongoose');
-
-// Configuration MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://coffeelivraison4:FCiljtFGv5iKaKL3@pariscoffee.x0f0tsy.mongodb.net/?retryWrites=true&w=majority&appName=Pariscoffee';
-
-// Schémas MongoDB pour le bot
-const botUserSchema = new mongoose.Schema({
-    userId: { type: Number, required: true, unique: true },
-    username: String,
-    firstName: String,
-    lastName: String,
-    isAdmin: { type: Boolean, default: false },
-    joinedAt: { type: Date, default: Date.now },
-    lastActive: { type: Date, default: Date.now }
-});
-
-const botConfigSchema = new mongoose.Schema({
-    key: { type: String, required: true, unique: true },
-    value: mongoose.Schema.Types.Mixed,
-    updatedAt: { type: Date, default: Date.now }
-});
-
-const botMessageSchema = new mongoose.Schema({
-    messageId: String,
-    userId: Number,
-    text: String,
-    type: String,
-    sentAt: { type: Date, default: Date.now }
-});
-
-// Modèles MongoDB
-const BotUser = mongoose.model('BotUser', botUserSchema);
-const BotConfig = mongoose.model('BotConfig', botConfigSchema);
-const BotMessage = mongoose.model('BotMessage', botMessageSchema);
-
-// Connexion à MongoDB
-mongoose.connect(MONGODB_URI)
-    .then(() => console.log('✅ Bot connecté à MongoDB'))
-    .catch(err => console.error('❌ Erreur connexion MongoDB:', err));
 
 // Vérifier les variables d'environnement
 if (!process.env.BOT_TOKEN) {
@@ -56,10 +17,6 @@ if (!process.env.ADMIN_ID) {
 }
 
 // Initialiser le bot
-console.log('🤖 Démarrage du bot...');
-console.log(`📡 Bot Token: ${process.env.BOT_TOKEN ? '✅ Configuré' : '❌ Manquant'}`);
-console.log(`👤 Admin ID: ${process.env.ADMIN_ID ? '✅ Configuré' : '❌ Manquant'}`);
-
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const ADMIN_ID = parseInt(process.env.ADMIN_ID);
 
@@ -78,66 +35,50 @@ const botStartTime = new Date();
 // Charger la configuration au démarrage
 let config = loadConfig();
 
-// Fonctions MongoDB pour remplacer les fichiers JSON
-async function loadUsers() {
+// Charger les utilisateurs sauvegardés
+const USERS_FILE = path.join(__dirname, 'users.json');
+const ADMINS_FILE = path.join(__dirname, 'admins.json');
+
+function loadUsers() {
     try {
-        const botUsers = await BotUser.find({});
-        users.clear();
-        botUsers.forEach(user => {
-            users.add(user.userId);
-            if (user.isAdmin) {
-                admins.add(user.userId);
-            }
-        });
-        console.log(`✅ ${users.size} utilisateurs chargés depuis MongoDB`);
+        if (fs.existsSync(USERS_FILE)) {
+            const data = fs.readJsonSync(USERS_FILE);
+            data.forEach(userId => users.add(userId));
+        }
     } catch (error) {
-        console.error('❌ Erreur lors du chargement des utilisateurs:', error);
+        console.error('Erreur lors du chargement des utilisateurs:', error);
     }
 }
 
-async function saveUser(userId, userData = {}) {
+function saveUsers() {
     try {
-        await BotUser.findOneAndUpdate(
-            { userId },
-            { 
-                userId,
-                ...userData,
-                lastActive: new Date()
-            },
-            { upsert: true, new: true }
-        );
+        fs.writeJsonSync(USERS_FILE, Array.from(users));
     } catch (error) {
-        console.error('❌ Erreur lors de la sauvegarde utilisateur:', error);
+        console.error('Erreur lors de la sauvegarde des utilisateurs:', error);
     }
 }
 
-async function saveAdmin(userId, isAdmin = true) {
+function loadAdmins() {
     try {
-        await BotUser.findOneAndUpdate(
-            { userId },
-            { isAdmin },
-            { upsert: true }
-        );
+        if (fs.existsSync(ADMINS_FILE)) {
+            const data = fs.readJsonSync(ADMINS_FILE);
+            data.forEach(adminId => admins.add(adminId));
+        }
     } catch (error) {
-        console.error('❌ Erreur lors de la sauvegarde admin:', error);
+        console.error('Erreur lors du chargement des admins:', error);
     }
 }
 
-async function removeAdmin(userId) {
+function saveAdmins() {
     try {
-        await BotUser.findOneAndUpdate(
-            { userId },
-            { isAdmin: false }
-        );
+        fs.writeJsonSync(ADMINS_FILE, Array.from(admins));
     } catch (error) {
-        console.error('❌ Erreur lors de la suppression admin:', error);
+        console.error('Erreur lors de la sauvegarde des admins:', error);
     }
 }
 
-// Charger les utilisateurs au démarrage (après connexion MongoDB)
-mongoose.connection.once('open', async () => {
-    await loadUsers();
-});
+loadUsers();
+loadAdmins();
 
 // Fonction pour supprimer tous les messages actifs d'un chat
 async function deleteActiveMessage(chatId) {
@@ -259,11 +200,7 @@ bot.onText(/\/start/, async (msg) => {
     
     // Ajouter l'utilisateur à la liste
     users.add(userId);
-    await saveUser(userId, {
-        username: msg.from.username,
-        firstName: msg.from.first_name,
-        lastName: msg.from.last_name
-    });
+    saveUsers();
     
     // Supprimer le message de commande
     try {
@@ -707,7 +644,7 @@ bot.on('callback_query', async (callbackQuery) => {
                     const adminToRemove = parseInt(data.replace('remove_admin_', ''));
                     if (admins.has(adminToRemove) && adminToRemove !== ADMIN_ID) {
                         admins.delete(adminToRemove);
-                        await removeAdmin(adminToRemove);
+                        saveAdmins();
                         await bot.answerCallbackQuery(callbackQuery.id, {
                             text: '✅ Administrateur retiré!',
                             show_alert: true
@@ -913,7 +850,7 @@ bot.on('message', async (msg) => {
                         const newAdminUsername = newAdminChat.username ? `@${newAdminChat.username}` : '';
                         
                         admins.add(newAdminId);
-                        await saveAdmin(newAdminId, true);
+                        saveAdmins();
                         delete userStates[userId];
                         
                         // Notifier le nouvel administrateur
