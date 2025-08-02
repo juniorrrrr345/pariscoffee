@@ -74,50 +74,66 @@ const botStartTime = new Date();
 // Charger la configuration au démarrage
 let config = loadConfig();
 
-// Charger les utilisateurs sauvegardés
-const USERS_FILE = path.join(__dirname, 'users.json');
-const ADMINS_FILE = path.join(__dirname, 'admins.json');
-
-function loadUsers() {
+// Fonctions MongoDB pour remplacer les fichiers JSON
+async function loadUsers() {
     try {
-        if (fs.existsSync(USERS_FILE)) {
-            const data = fs.readJsonSync(USERS_FILE);
-            data.forEach(userId => users.add(userId));
-        }
+        const botUsers = await BotUser.find({});
+        users.clear();
+        botUsers.forEach(user => {
+            users.add(user.userId);
+            if (user.isAdmin) {
+                admins.add(user.userId);
+            }
+        });
+        console.log(`✅ ${users.size} utilisateurs chargés depuis MongoDB`);
     } catch (error) {
-        console.error('Erreur lors du chargement des utilisateurs:', error);
+        console.error('❌ Erreur lors du chargement des utilisateurs:', error);
     }
 }
 
-function saveUsers() {
+async function saveUser(userId, userData = {}) {
     try {
-        fs.writeJsonSync(USERS_FILE, Array.from(users));
+        await BotUser.findOneAndUpdate(
+            { userId },
+            { 
+                userId,
+                ...userData,
+                lastActive: new Date()
+            },
+            { upsert: true, new: true }
+        );
     } catch (error) {
-        console.error('Erreur lors de la sauvegarde des utilisateurs:', error);
+        console.error('❌ Erreur lors de la sauvegarde utilisateur:', error);
     }
 }
 
-function loadAdmins() {
+async function saveAdmin(userId, isAdmin = true) {
     try {
-        if (fs.existsSync(ADMINS_FILE)) {
-            const data = fs.readJsonSync(ADMINS_FILE);
-            data.forEach(adminId => admins.add(adminId));
-        }
+        await BotUser.findOneAndUpdate(
+            { userId },
+            { isAdmin },
+            { upsert: true }
+        );
     } catch (error) {
-        console.error('Erreur lors du chargement des admins:', error);
+        console.error('❌ Erreur lors de la sauvegarde admin:', error);
     }
 }
 
-function saveAdmins() {
+async function removeAdmin(userId) {
     try {
-        fs.writeJsonSync(ADMINS_FILE, Array.from(admins));
+        await BotUser.findOneAndUpdate(
+            { userId },
+            { isAdmin: false }
+        );
     } catch (error) {
-        console.error('Erreur lors de la sauvegarde des admins:', error);
+        console.error('❌ Erreur lors de la suppression admin:', error);
     }
 }
 
-loadUsers();
-loadAdmins();
+// Charger les utilisateurs au démarrage (après connexion MongoDB)
+mongoose.connection.once('open', async () => {
+    await loadUsers();
+});
 
 // Fonction pour supprimer tous les messages actifs d'un chat
 async function deleteActiveMessage(chatId) {
@@ -239,7 +255,11 @@ bot.onText(/\/start/, async (msg) => {
     
     // Ajouter l'utilisateur à la liste
     users.add(userId);
-    saveUsers();
+    await saveUser(userId, {
+        username: msg.from.username,
+        firstName: msg.from.first_name,
+        lastName: msg.from.last_name
+    });
     
     // Supprimer le message de commande
     try {
@@ -683,7 +703,7 @@ bot.on('callback_query', async (callbackQuery) => {
                     const adminToRemove = parseInt(data.replace('remove_admin_', ''));
                     if (admins.has(adminToRemove) && adminToRemove !== ADMIN_ID) {
                         admins.delete(adminToRemove);
-                        saveAdmins();
+                        await removeAdmin(adminToRemove);
                         await bot.answerCallbackQuery(callbackQuery.id, {
                             text: '✅ Administrateur retiré!',
                             show_alert: true
@@ -889,7 +909,7 @@ bot.on('message', async (msg) => {
                         const newAdminUsername = newAdminChat.username ? `@${newAdminChat.username}` : '';
                         
                         admins.add(newAdminId);
-                        saveAdmins();
+                        await saveAdmin(newAdminId, true);
                         delete userStates[userId];
                         
                         // Notifier le nouvel administrateur
