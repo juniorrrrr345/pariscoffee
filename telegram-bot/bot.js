@@ -56,6 +56,10 @@ if (!process.env.ADMIN_ID) {
 }
 
 // Initialiser le bot
+console.log('🤖 Démarrage du bot...');
+console.log(`📡 Bot Token: ${process.env.BOT_TOKEN ? '✅ Configuré' : '❌ Manquant'}`);
+console.log(`👤 Admin ID: ${process.env.ADMIN_ID ? '✅ Configuré' : '❌ Manquant'}`);
+
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const ADMIN_ID = parseInt(process.env.ADMIN_ID);
 
