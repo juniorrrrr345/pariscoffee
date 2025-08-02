@@ -1114,3 +1114,18 @@ bot.on('polling_error', (error) => {
 console.log('🤖 Bot démarré avec succès!');
 console.log(`📱 Parlez au bot: https://t.me/${process.env.BOT_USERNAME || 'votre_bot'}`);
 console.log(`🔧 ID Admin: ${ADMIN_ID}`);
+
+// Serveur HTTP pour Render (pour éviter l'erreur de port)
+const http = require('http');
+const PORT = process.env.PORT || 3000;
+
+const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Bot Telegram actif! 🤖\n');
+});
+
+server.listen(PORT, () => {
+    console.log(`📡 Serveur HTTP démarré sur le port ${PORT} (pour Render)`);
+});
+
+console.log('✅ Bot Telegram prêt!');
