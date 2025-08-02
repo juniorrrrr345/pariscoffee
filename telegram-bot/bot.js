@@ -16,7 +16,48 @@ if (!process.env.ADMIN_ID) {
     process.exit(1);
 }
 
+// Configuration MongoDB
+let mongoose;
+let BotUser;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://coffeelivraison4:FCiljtFGv5iKaKL3@pariscoffee.x0f0tsy.mongodb.net/test?retryWrites=true&w=majority&appName=Pariscoffee';
+
+// Essayer de charger MongoDB, sinon utiliser les fichiers JSON
+try {
+    mongoose = require('mongoose');
+    
+    // Schéma simple pour les utilisateurs du bot
+    const botUserSchema = new mongoose.Schema({
+        userId: { type: Number, required: true, unique: true },
+        username: String,
+        firstName: String,
+        lastName: String,
+        isAdmin: { type: Boolean, default: false },
+        joinedAt: { type: Date, default: Date.now },
+        lastActive: { type: Date, default: Date.now }
+    });
+    
+    BotUser = mongoose.model('BotUser', botUserSchema);
+    
+    // Connexion à MongoDB
+    mongoose.connect(MONGODB_URI)
+        .then(() => {
+            console.log('✅ Bot connecté à MongoDB');
+            loadUsersFromMongoDB();
+        })
+        .catch(err => {
+            console.error('⚠️ Erreur MongoDB, utilisation des fichiers JSON:', err.message);
+            loadUsersFromFiles();
+        });
+} catch (error) {
+    console.log('⚠️ MongoDB non disponible, utilisation des fichiers JSON');
+    loadUsersFromFiles();
+}
+
 // Initialiser le bot
+console.log('🤖 Démarrage du bot...');
+console.log(`📡 Bot Token: ${process.env.BOT_TOKEN ? '✅ Configuré' : '❌ Manquant'}`);
+console.log(`👤 Admin ID: ${process.env.ADMIN_ID ? '✅ Configuré' : '❌ Manquant'}`);
+
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const ADMIN_ID = parseInt(process.env.ADMIN_ID);
 
@@ -35,18 +76,78 @@ const botStartTime = new Date();
 // Charger la configuration au démarrage
 let config = loadConfig();
 
-// Charger les utilisateurs sauvegardés
+// Fichiers JSON (fallback)
 const USERS_FILE = path.join(__dirname, 'users.json');
 const ADMINS_FILE = path.join(__dirname, 'admins.json');
 
-function loadUsers() {
+// Fonctions pour MongoDB
+async function loadUsersFromMongoDB() {
+    try {
+        const botUsers = await BotUser.find({});
+        users.clear();
+        admins.clear();
+        admins.add(ADMIN_ID); // Toujours inclure l'admin principal
+        
+        botUsers.forEach(user => {
+            users.add(user.userId);
+            if (user.isAdmin) {
+                admins.add(user.userId);
+            }
+        });
+        
+        console.log(`✅ ${users.size} utilisateurs chargés depuis MongoDB`);
+    } catch (error) {
+        console.error('❌ Erreur chargement MongoDB:', error);
+        loadUsersFromFiles();
+    }
+}
+
+async function saveUserToMongoDB(userId, userData = {}) {
+    if (!BotUser) return;
+    
+    try {
+        await BotUser.findOneAndUpdate(
+            { userId },
+            { 
+                userId,
+                ...userData,
+                lastActive: new Date()
+            },
+            { upsert: true, new: true }
+        );
+    } catch (error) {
+        console.error('❌ Erreur sauvegarde utilisateur MongoDB:', error);
+    }
+}
+
+async function updateAdminInMongoDB(userId, isAdmin) {
+    if (!BotUser) return;
+    
+    try {
+        await BotUser.findOneAndUpdate(
+            { userId },
+            { isAdmin },
+            { upsert: true }
+        );
+    } catch (error) {
+        console.error('❌ Erreur mise à jour admin MongoDB:', error);
+    }
+}
+
+// Fonctions pour fichiers JSON (fallback)
+function loadUsersFromFiles() {
     try {
         if (fs.existsSync(USERS_FILE)) {
             const data = fs.readJsonSync(USERS_FILE);
             data.forEach(userId => users.add(userId));
         }
+        if (fs.existsSync(ADMINS_FILE)) {
+            const data = fs.readJsonSync(ADMINS_FILE);
+            data.forEach(adminId => admins.add(adminId));
+        }
+        console.log(`📁 ${users.size} utilisateurs chargés depuis les fichiers JSON`);
     } catch (error) {
-        console.error('Erreur lors du chargement des utilisateurs:', error);
+        console.error('Erreur lors du chargement des fichiers:', error);
     }
 }
 
@@ -58,17 +159,6 @@ function saveUsers() {
     }
 }
 
-function loadAdmins() {
-    try {
-        if (fs.existsSync(ADMINS_FILE)) {
-            const data = fs.readJsonSync(ADMINS_FILE);
-            data.forEach(adminId => admins.add(adminId));
-        }
-    } catch (error) {
-        console.error('Erreur lors du chargement des admins:', error);
-    }
-}
-
 function saveAdmins() {
     try {
         fs.writeJsonSync(ADMINS_FILE, Array.from(admins));
@@ -77,8 +167,40 @@ function saveAdmins() {
     }
 }
 
-loadUsers();
-loadAdmins();
+// Fonction unifiée pour sauvegarder un utilisateur
+async function saveUser(userId, userData = {}) {
+    users.add(userId);
+    
+    // Sauvegarder dans MongoDB si disponible
+    if (BotUser) {
+        await saveUserToMongoDB(userId, userData);
+    } else {
+        // Sinon sauvegarder dans les fichiers
+        saveUsers();
+    }
+}
+
+// Fonction unifiée pour gérer les admins
+async function setAdmin(userId, isAdmin = true) {
+    if (isAdmin) {
+        admins.add(userId);
+    } else {
+        admins.delete(userId);
+    }
+    
+    // Mettre à jour dans MongoDB si disponible
+    if (BotUser) {
+        await updateAdminInMongoDB(userId, isAdmin);
+    } else {
+        // Sinon sauvegarder dans les fichiers
+        saveAdmins();
+    }
+}
+
+// Si MongoDB n'est pas disponible, charger depuis les fichiers
+if (!mongoose) {
+    loadUsersFromFiles();
+}
 
 // Fonction pour supprimer tous les messages actifs d'un chat
 async function deleteActiveMessage(chatId) {
@@ -199,8 +321,7 @@ bot.onText(/\/start/, async (msg) => {
     const userId = msg.from.id;
     
     // Ajouter l'utilisateur à la liste
-    users.add(userId);
-    saveUsers();
+    await saveUser(userId, { username: msg.from.username, firstName: msg.from.first_name, lastName: msg.from.last_name });
     
     // Supprimer le message de commande
     try {
@@ -418,9 +539,9 @@ bot.on('callback_query', async (callbackQuery) => {
             case 'admin_manage_admins':
                 const adminsList = await Promise.all(Array.from(admins).map(async (id) => {
                     try {
-                        const chat = await bot.getChat(id);
-                        const name = chat.first_name + (chat.last_name ? ` ${chat.last_name}` : '');
-                        const username = chat.username ? `@${chat.username}` : '';
+                        const user = await BotUser.findOne({ userId: id });
+                        const name = user ? `${user.firstName} ${user.lastName}` : 'Utilisateur inconnu';
+                        const username = user ? (user.username ? `@${user.username}` : '') : '';
                         if (id === ADMIN_ID) {
                             return `👑 **${name}**${username ? ` (${username})` : ''}\n   └─ ID: \`${id}\` _(Principal)_`;
                         }
@@ -548,17 +669,17 @@ bot.on('callback_query', async (callbackQuery) => {
                 // Créer une liste détaillée des utilisateurs
                 const usersDetails = await Promise.all(Array.from(users).map(async (userId) => {
                     try {
-                        const userChat = await bot.getChat(userId);
+                        const user = await BotUser.findOne({ userId });
                         const isAdmin = admins.has(userId);
-                        const firstName = userChat.first_name || '';
-                        const lastName = userChat.last_name || '';
-                        const username = userChat.username ? `@${userChat.username}` : 'Pas de username';
+                        const firstName = user ? user.firstName : 'Utilisateur inconnu';
+                        const lastName = user ? user.lastName : '';
+                        const username = user ? (user.username ? `@${user.username}` : '') : 'Pas de username';
                         const fullName = `${firstName} ${lastName}`.trim() || 'Sans nom';
                         
                         return `ID: ${userId}${isAdmin ? ' [ADMIN]' : ''}\n` +
                                `Nom: ${fullName}\n` +
                                `Username: ${username}\n` +
-                               `Type: ${userChat.type}\n` +
+                               `Type: ${user ? user.type : 'Utilisateur inconnu'}\n` +
                                `----------------------------`;
                     } catch (error) {
                         // Si on ne peut pas obtenir les infos (utilisateur a bloqué le bot)
@@ -643,19 +764,29 @@ bot.on('callback_query', async (callbackQuery) => {
                 else if (data.startsWith('remove_admin_')) {
                     const adminToRemove = parseInt(data.replace('remove_admin_', ''));
                     if (admins.has(adminToRemove) && adminToRemove !== ADMIN_ID) {
-                        admins.delete(adminToRemove);
-                        saveAdmins();
+                        await setAdmin(adminToRemove, false); // Retirer l'admin
                         await bot.answerCallbackQuery(callbackQuery.id, {
                             text: '✅ Administrateur retiré!',
                             show_alert: true
                         });
                         // Retour à la liste des admins
-                        const adminsList = Array.from(admins).map(id => {
-                            if (id === ADMIN_ID) return `👑 ${id} (Principal)`;
-                            return `👤 ${id}`;
-                        }).join('\n');
+                        const adminsList = await Promise.all(Array.from(admins).map(async (id) => {
+                            try {
+                                const user = await BotUser.findOne({ userId: id });
+                                const name = user ? `${user.firstName} ${user.lastName}` : 'Utilisateur inconnu';
+                                const username = user ? (user.username ? `@${user.username}` : '') : '';
+                                if (id === ADMIN_ID) {
+                                    return `👑 **${name}**${username ? ` (${username})` : ''}\n   └─ ID: \`${id}\` _(Principal)_`;
+                                }
+                                return `👤 **${name}**${username ? ` (${username})` : ''}\n   └─ ID: \`${id}\``;
+                            } catch (error) {
+                                if (id === ADMIN_ID) return `👑 ID: \`${id}\` _(Principal)_`;
+                                return `👤 ID: \`${id}\``;
+                            }
+                        }));
                         
-                        await updateMessage(chatId, messageId, `👥 Administrateurs actuels:\n\n${adminsList}`, {
+                        const adminCount = admins.size;
+                        await updateMessage(chatId, messageId, `👥 Administrateurs actuels:\n\n${adminsList.join('\n\n')}`, {
                             reply_markup: {
                                 inline_keyboard: [
                                     [{ text: '➕ Ajouter un admin', callback_data: 'admin_add_admin' }],
@@ -849,8 +980,7 @@ bot.on('message', async (msg) => {
                         const newAdminName = newAdminChat.first_name + (newAdminChat.last_name ? ` ${newAdminChat.last_name}` : '');
                         const newAdminUsername = newAdminChat.username ? `@${newAdminChat.username}` : '';
                         
-                        admins.add(newAdminId);
-                        saveAdmins();
+                        await setAdmin(newAdminId, true); // Ajouter l'admin
                         delete userStates[userId];
                         
                         // Notifier le nouvel administrateur
@@ -867,9 +997,9 @@ bot.on('message', async (msg) => {
                         
                         const adminsList = await Promise.all(Array.from(admins).map(async (id) => {
                             try {
-                                const chat = await bot.getChat(id);
-                                const name = chat.first_name + (chat.last_name ? ` ${chat.last_name}` : '');
-                                const username = chat.username ? `@${chat.username}` : '';
+                                const user = await BotUser.findOne({ userId: id });
+                                const name = user ? `${user.firstName} ${user.lastName}` : 'Utilisateur inconnu';
+                                const username = user ? (user.username ? `@${user.username}` : '') : '';
                                 if (id === ADMIN_ID) {
                                     return `👑 **${name}**${username ? ` (${username})` : ''}\n   └─ ID: \`${id}\` _(Principal)_`;
                                 }
