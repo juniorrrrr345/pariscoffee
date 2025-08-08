@@ -1,16 +1,14 @@
 services:
-  # Pour un Web Service GRATUIT (avec webhooks)
+  # Pour un Web Service GRATUIT (mode polling avec serveur HTTP intégré)
   - type: web
     name: telegram-bot-web
     env: node
     buildCommand: npm install
-    startCommand: npm run webhook
+    startCommand: npm start
     envVars:
       - key: BOT_TOKEN
         sync: false
       - key: ADMIN_ID
-        sync: false
-      - key: WEBHOOK_URL
         sync: false
         
   # OU pour un Background Worker PAYANT (7$/mois)
