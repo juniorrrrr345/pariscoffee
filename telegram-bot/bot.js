@@ -961,17 +961,25 @@ bot.on('message', async (msg) => {
             case 'adding_admin':
                 const newAdminId = parseInt(msg.text);
                 if (isNaN(newAdminId)) {
-                    await bot.answerCallbackQuery(callbackQuery.id, {
-                        text: '❌ ID invalide. Veuillez entrer un nombre.',
-                        show_alert: true
+                    await updateMessage(chatId, userState.messageId,
+                        '❌ ID invalide. Veuillez envoyer un nombre (ID Telegram).', {
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: '❌ Annuler', callback_data: 'admin_manage_admins' }
+                            ]]
+                        }
                     });
                     break;
                 }
                 
                 if (admins.has(newAdminId)) {
-                    await bot.answerCallbackQuery(callbackQuery.id, {
-                        text: '⚠️ Cet utilisateur est déjà administrateur!',
-                        show_alert: true
+                    await updateMessage(chatId, userState.messageId,
+                        '⚠️ Cet utilisateur est déjà administrateur!\n\nEnvoyez un autre ID.', {
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: '❌ Annuler', callback_data: 'admin_manage_admins' }
+                            ]]
+                        }
                     });
                 } else {
                     // Vérifier si l'utilisateur existe
