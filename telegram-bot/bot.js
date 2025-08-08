@@ -558,7 +558,6 @@ bot.on('callback_query', async (callbackQuery) => {
                     `**Liste des administrateurs:**\n${adminsList.join('\n\n')}`;
                 
                 await updateMessage(chatId, messageId, adminMessage, {
-                    parse_mode: 'Markdown',
                     reply_markup: {
                         inline_keyboard: [
                             [{ text: '➕ Ajouter un admin', callback_data: 'admin_add_admin' }],
@@ -654,7 +653,6 @@ bot.on('callback_query', async (callbackQuery) => {
                     `└─ Message d'accueil: ${config.welcomeMessage ? 'Configuré ✅' : 'Non configuré ❌'}`;
                 
                 await updateMessage(chatId, messageId, statsMessage, {
-                    parse_mode: 'Markdown',
                     reply_markup: {
                         inline_keyboard: [
                             [{ text: '🔄 Actualiser', callback_data: 'admin_stats' }],
@@ -787,6 +785,7 @@ bot.on('callback_query', async (callbackQuery) => {
                         
                         const adminCount = admins.size;
                         await updateMessage(chatId, messageId, `👥 Administrateurs actuels:\n\n${adminsList.join('\n\n')}`, {
+                            // parse_mode: 'Markdown', // disabled to avoid formatting issues
                             reply_markup: {
                                 inline_keyboard: [
                                     [{ text: '➕ Ajouter un admin', callback_data: 'admin_add_admin' }],
@@ -1020,11 +1019,10 @@ bot.on('message', async (msg) => {
                         
                         const adminCount = admins.size;
                         await updateMessage(chatId, userState.messageId, 
-                            `✅ **Administrateur ajouté avec succès!**\n\n` +
-                            `👤 **Nouvel admin:** ${newAdminName}${newAdminUsername ? ` (${newAdminUsername})` : ''}\n\n` +
+                            `✅ Administrateur ajouté avec succès!\n\n` +
+                            `👤 Nouvel admin: ${newAdminName}${newAdminUsername ? ` (${newAdminUsername})` : ''}\n\n` +
                             `📊 Total: ${adminCount} administrateur${adminCount > 1 ? 's' : ''}\n\n` +
-                            `**Liste des administrateurs:**\n${adminsList.join('\n\n')}`, {
-                            parse_mode: 'Markdown',
+                            `Liste des administrateurs:\n${adminsList.join('\n\n')}`, {
                             reply_markup: {
                                 inline_keyboard: [
                                     [{ text: '➕ Ajouter un admin', callback_data: 'admin_add_admin' }],
