@@ -314,255 +314,276 @@ bot.onText(/\/admin/, async (msg) => {
 
 // Gestion des callbacks (boutons)
 bot.on('callback_query', async (callbackQuery) => {
-    const chatId = callbackQuery.message.chat.id;
-    const messageId = callbackQuery.message.message_id;
-    const userId = callbackQuery.from.id;
-    const data = callbackQuery.data;
+    try {
+        const chatId = callbackQuery.message.chat.id;
+        const messageId = callbackQuery.message.message_id;
+        const userId = callbackQuery.from.id;
+        const data = callbackQuery.data;
 
-    // Répondre au callback pour éviter le timeout
-    await bot.answerCallbackQuery(callbackQuery.id);
+        console.log(`📱 Callback reçu: ${data} de l'utilisateur ${userId}`);
 
-    // Vérifier si l'utilisateur est enregistré
-    if (!users.has(userId)) {
-        users.add(userId);
-        saveUsers();
-        await saveUserToMongoDB(userId, {
-            username: callbackQuery.from.username,
-            firstName: callbackQuery.from.first_name,
-            lastName: callbackQuery.from.last_name
-        });
-    }
+        // Répondre immédiatement au callback pour éviter le timeout
+        await bot.answerCallbackQuery(callbackQuery.id).catch(err => 
+            console.error('Erreur answerCallbackQuery:', err)
+        );
 
-    // Gestion des différentes actions
-    switch(data) {
-        case 'back_to_main':
-            delete userStates[chatId];
-            await sendWelcomeMessage(chatId, messageId, callbackQuery.from);
-            break;
-
-        case 'admin_menu':
-            if (!admins.has(userId)) {
-                await bot.answerCallbackQuery(callbackQuery.id, {
-                    text: '❌ Accès refusé',
-                    show_alert: true
-                });
-                return;
-            }
-            await updateMessage(chatId, messageId, '🔧 Menu Administrateur', {
-                reply_markup: getAdminKeyboard()
+        // Vérifier si l'utilisateur est enregistré
+        if (!users.has(userId)) {
+            users.add(userId);
+            saveUsers();
+            await saveUserToMongoDB(userId, {
+                username: callbackQuery.from.username,
+                firstName: callbackQuery.from.first_name,
+                lastName: callbackQuery.from.last_name
             });
-            break;
+        }
 
-        case 'edit_welcome':
-            if (!admins.has(userId)) return;
-            userStates[chatId] = { action: 'editing_welcome' };
-            await updateMessage(chatId, messageId, 
-                '✏️ Envoyez le nouveau message d\'accueil.\n\n' +
-                '💡 Vous pouvez utiliser ces variables :\n' +
-                '• {firstname} - Prénom de l\'utilisateur\n' +
-                '• {lastname} - Nom de famille\n' +
-                '• {username} - @username\n' +
-                '• {fullname} - Nom complet\n\n' +
-                'Vous pouvez aussi utiliser du HTML pour formater le texte.',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
-            );
-            break;
-
-        case 'edit_welcome_image':
-            if (!admins.has(userId)) return;
-            userStates[chatId] = { action: 'editing_welcome_image' };
-            await updateMessage(chatId, messageId, 
-                '🖼 Envoyez la nouvelle image d\'accueil.\n\n' +
-                '⚠️ L\'image sera affichée avec le message d\'accueil.',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
-            );
-            break;
-
-        case 'manage_social':
-            if (!admins.has(userId)) return;
-            await updateMessage(chatId, messageId, '📱 Gestion des réseaux sociaux', {
-                reply_markup: getSocialManageKeyboard()
-            });
-            break;
-
-        case 'add_social':
-            if (!admins.has(userId)) return;
-            userStates[chatId] = { action: 'adding_social_name' };
-            await updateMessage(chatId, messageId, 
-                '➕ Ajout d\'un réseau social\n\n' +
-                '1️⃣ Envoyez le nom du réseau social (ex: Instagram, Twitter, etc.)',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'manage_social' }]] }}
-            );
-            break;
-
-        case 'edit_social':
-            if (!admins.has(userId)) return;
-            if (!config.socialNetworks || config.socialNetworks.length === 0) {
-                await bot.answerCallbackQuery(callbackQuery.id, {
-                    text: 'Aucun réseau social configuré',
-                    show_alert: true
-                });
-                return;
-            }
-            
-            const editButtons = config.socialNetworks.map((social, index) => [{
-                text: `${social.icon || '🔗'} ${social.name}`,
-                callback_data: `edit_social_${index}`
-            }]);
-            editButtons.push([{ text: '🔙 Retour', callback_data: 'manage_social' }]);
-            
-            await updateMessage(chatId, messageId, '✏️ Sélectionnez le réseau social à modifier :', {
-                reply_markup: { inline_keyboard: editButtons }
-            });
-            break;
-
-        case 'delete_social':
-            if (!admins.has(userId)) return;
-            if (!config.socialNetworks || config.socialNetworks.length === 0) {
-                await bot.answerCallbackQuery(callbackQuery.id, {
-                    text: 'Aucun réseau social configuré',
-                    show_alert: true
-                });
-                return;
-            }
-            
-            const deleteButtons = config.socialNetworks.map((social, index) => [{
-                text: `🗑 ${social.name}`,
-                callback_data: `delete_social_${index}`
-            }]);
-            deleteButtons.push([{ text: '🔙 Retour', callback_data: 'manage_social' }]);
-            
-            await updateMessage(chatId, messageId, '🗑 Sélectionnez le réseau social à supprimer :', {
-                reply_markup: { inline_keyboard: deleteButtons }
-            });
-            break;
-
-        case 'social_layout':
-            if (!admins.has(userId)) return;
-            await updateMessage(chatId, messageId, 
-                '📐 Disposition des boutons de réseaux sociaux\n\n' +
-                `Disposition actuelle : ${config.socialLayout === 'horizontal' ? 'Horizontal (2 par ligne)' : 'Vertical (1 par ligne)'}`,
-                { reply_markup: getSocialLayoutKeyboard(config.socialLayout) }
-            );
-            break;
-
-        case 'layout_vertical':
-            if (!admins.has(userId)) return;
-            config.socialLayout = 'vertical';
-            saveConfig(config);
-            await updateMessage(chatId, messageId, 
-                '✅ Disposition changée en vertical (1 bouton par ligne)',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'manage_social' }]] }}
-            );
-            break;
-
-        case 'layout_horizontal':
-            if (!admins.has(userId)) return;
-            config.socialLayout = 'horizontal';
-            saveConfig(config);
-            await updateMessage(chatId, messageId, 
-                '✅ Disposition changée en horizontal (2 boutons par ligne)',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'manage_social' }]] }}
-            );
-            break;
-
-        case 'stats':
-            if (!admins.has(userId)) return;
-            const stats = `📊 Statistiques du bot\n\n` +
-                `👥 Utilisateurs totaux : ${users.size}\n` +
-                `👮‍♂️ Administrateurs : ${admins.size}\n` +
-                `📱 Réseaux sociaux : ${config.socialNetworks ? config.socialNetworks.length : 0}`;
-            
-            await updateMessage(chatId, messageId, stats, {
-                reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }
-            });
-            break;
-
-        case 'broadcast':
-            if (!admins.has(userId)) return;
-            userStates[chatId] = { action: 'broadcasting' };
-            await updateMessage(chatId, messageId, 
-                '📢 Envoyez le message à diffuser à tous les utilisateurs.\n\n' +
-                '⚠️ Ce message sera envoyé à tous les utilisateurs du bot.',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'admin_menu' }]] }}
-            );
-            break;
-
-        case 'manage_admins':
-            if (userId !== ADMIN_ID) {
-                await bot.answerCallbackQuery(callbackQuery.id, {
-                    text: '❌ Seul l\'administrateur principal peut gérer les admins',
-                    show_alert: true
-                });
-                return;
-            }
-            
-            const adminList = Array.from(admins).map(id => `• ${id}`).join('\n');
-            await updateMessage(chatId, messageId, 
-                `👮‍♂️ Gestion des administrateurs\n\n` +
-                `Admins actuels :\n${adminList}\n\n` +
-                `Pour ajouter : /addadmin [ID]\n` +
-                `Pour retirer : /removeadmin [ID]`,
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
-            );
-            break;
-
-        default:
-            // Gestion des callbacks dynamiques
-            if (data.startsWith('social_')) {
-                const socialIndex = parseInt(data.replace('social_', ''));
-                if (config.socialNetworks && config.socialNetworks[socialIndex]) {
-                    const social = config.socialNetworks[socialIndex];
-                    await bot.answerCallbackQuery(callbackQuery.id, {
-                        text: `Ouverture de ${social.name}...`,
-                        url: social.url
-                    });
-                }
-            } else if (data.startsWith('edit_social_')) {
-                if (!admins.has(userId)) return;
-                const index = parseInt(data.replace('edit_social_', ''));
-                userStates[chatId] = { 
-                    action: 'editing_social', 
-                    socialIndex: index 
-                };
-                const social = config.socialNetworks[index];
-                await updateMessage(chatId, messageId, 
-                    `✏️ Modification de ${social.name}\n\n` +
-                    `URL actuelle : ${social.url}\n` +
-                    `Icône actuelle : ${social.icon || '🔗'}\n\n` +
-                    `Envoyez la nouvelle URL :`,
-                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'edit_social' }]] }}
-                );
-            } else if (data.startsWith('delete_social_')) {
-                if (!admins.has(userId)) return;
-                const index = parseInt(data.replace('delete_social_', ''));
-                const social = config.socialNetworks[index];
-                userStates[chatId] = { 
-                    action: 'confirming_delete_social', 
-                    socialIndex: index 
-                };
-                await updateMessage(chatId, messageId, 
-                    `⚠️ Êtes-vous sûr de vouloir supprimer ${social.name} ?`,
-                    { reply_markup: getConfirmKeyboard() }
-                );
-            } else if (data === 'confirm_yes' && userStates[chatId]?.action === 'confirming_delete_social') {
-                if (!admins.has(userId)) return;
-                const index = userStates[chatId].socialIndex;
-                const socialName = config.socialNetworks[index].name;
-                config.socialNetworks.splice(index, 1);
-                saveConfig(config);
+        // Gestion des différentes actions
+        switch(data) {
+            case 'back_to_main':
                 delete userStates[chatId];
+                await sendWelcomeMessage(chatId, messageId, callbackQuery.from);
+                break;
+
+            case 'admin_menu':
+                if (!admins.has(userId)) {
+                    await bot.answerCallbackQuery(callbackQuery.id, {
+                        text: '❌ Accès refusé',
+                        show_alert: true
+                    }).catch(err => console.error('Erreur callback admin_menu:', err));
+                    return;
+                }
+                await updateMessage(chatId, messageId, '🔧 Menu Administrateur', {
+                    reply_markup: getAdminKeyboard()
+                });
+                break;
+
+            case 'edit_welcome':
+                if (!admins.has(userId)) return;
+                userStates[chatId] = { action: 'editing_welcome' };
                 await updateMessage(chatId, messageId, 
-                    `✅ ${socialName} a été supprimé avec succès.`,
+                    '✏️ Envoyez le nouveau message d\'accueil.\n\n' +
+                    '💡 Vous pouvez utiliser ces variables :\n' +
+                    '• {firstname} - Prénom de l\'utilisateur\n' +
+                    '• {lastname} - Nom de famille\n' +
+                    '• {username} - @username\n' +
+                    '• {fullname} - Nom complet\n\n' +
+                    'Vous pouvez aussi utiliser du HTML pour formater le texte.',
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
+                );
+                break;
+
+            case 'edit_welcome_image':
+                if (!admins.has(userId)) return;
+                userStates[chatId] = { action: 'editing_welcome_image' };
+                await updateMessage(chatId, messageId, 
+                    '🖼 Envoyez la nouvelle image d\'accueil.\n\n' +
+                    '⚠️ L\'image sera affichée avec le message d\'accueil.',
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
+                );
+                break;
+
+            case 'manage_social':
+                if (!admins.has(userId)) return;
+                await updateMessage(chatId, messageId, '📱 Gestion des réseaux sociaux', {
+                    reply_markup: getSocialManageKeyboard()
+                });
+                break;
+
+            case 'add_social':
+                if (!admins.has(userId)) return;
+                userStates[chatId] = { action: 'adding_social_name' };
+                await updateMessage(chatId, messageId, 
+                    '➕ Ajout d\'un réseau social\n\n' +
+                    '1️⃣ Envoyez le nom du réseau social (ex: Instagram, Twitter, etc.)',
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'manage_social' }]] }}
+                );
+                break;
+
+            case 'edit_social':
+                if (!admins.has(userId)) return;
+                if (!config.socialNetworks || config.socialNetworks.length === 0) {
+                    await bot.answerCallbackQuery(callbackQuery.id, {
+                        text: 'Aucun réseau social configuré',
+                        show_alert: true
+                    });
+                    return;
+                }
+                
+                const editButtons = config.socialNetworks.map((social, index) => [{
+                    text: `${social.icon || '🔗'} ${social.name}`,
+                    callback_data: `edit_social_${index}`
+                }]);
+                editButtons.push([{ text: '🔙 Retour', callback_data: 'manage_social' }]);
+                
+                await updateMessage(chatId, messageId, '✏️ Sélectionnez le réseau social à modifier :', {
+                    reply_markup: { inline_keyboard: editButtons }
+                });
+                break;
+
+            case 'delete_social':
+                if (!admins.has(userId)) return;
+                if (!config.socialNetworks || config.socialNetworks.length === 0) {
+                    await bot.answerCallbackQuery(callbackQuery.id, {
+                        text: 'Aucun réseau social configuré',
+                        show_alert: true
+                    });
+                    return;
+                }
+                
+                const deleteButtons = config.socialNetworks.map((social, index) => [{
+                    text: `🗑 ${social.name}`,
+                    callback_data: `delete_social_${index}`
+                }]);
+                deleteButtons.push([{ text: '🔙 Retour', callback_data: 'manage_social' }]);
+                
+                await updateMessage(chatId, messageId, '🗑 Sélectionnez le réseau social à supprimer :', {
+                    reply_markup: { inline_keyboard: deleteButtons }
+                });
+                break;
+
+            case 'social_layout':
+                if (!admins.has(userId)) return;
+                await updateMessage(chatId, messageId, 
+                    '📐 Disposition des boutons de réseaux sociaux\n\n' +
+                    `Disposition actuelle : ${config.socialLayout === 'horizontal' ? 'Horizontal (2 par ligne)' : 'Vertical (1 par ligne)'}`,
+                    { reply_markup: getSocialLayoutKeyboard(config.socialLayout) }
+                );
+                break;
+
+            case 'layout_vertical':
+                if (!admins.has(userId)) return;
+                config.socialLayout = 'vertical';
+                saveConfig(config);
+                await updateMessage(chatId, messageId, 
+                    '✅ Disposition changée en vertical (1 bouton par ligne)',
                     { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'manage_social' }]] }}
                 );
-            } else if (data === 'confirm_no' && userStates[chatId]?.action === 'confirming_delete_social') {
-                delete userStates[chatId];
+                break;
+
+            case 'layout_horizontal':
+                if (!admins.has(userId)) return;
+                config.socialLayout = 'horizontal';
+                saveConfig(config);
                 await updateMessage(chatId, messageId, 
-                    '❌ Suppression annulée.',
-                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'delete_social' }]] }}
+                    '✅ Disposition changée en horizontal (2 boutons par ligne)',
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'manage_social' }]] }}
                 );
-            }
+                break;
+
+            case 'stats':
+                if (!admins.has(userId)) return;
+                const stats = `📊 Statistiques du bot\n\n` +
+                    `👥 Utilisateurs totaux : ${users.size}\n` +
+                    `👮‍♂️ Administrateurs : ${admins.size}\n` +
+                    `📱 Réseaux sociaux : ${config.socialNetworks ? config.socialNetworks.length : 0}`;
+                
+                await updateMessage(chatId, messageId, stats, {
+                    reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }
+                });
+                break;
+
+            case 'broadcast':
+                if (!admins.has(userId)) return;
+                userStates[chatId] = { action: 'broadcasting' };
+                await updateMessage(chatId, messageId, 
+                    '📢 Envoyez le message à diffuser à tous les utilisateurs.\n\n' +
+                    '⚠️ Ce message sera envoyé à tous les utilisateurs du bot.',
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'admin_menu' }]] }}
+                );
+                break;
+
+            case 'manage_admins':
+                if (userId !== ADMIN_ID) {
+                    await bot.answerCallbackQuery(callbackQuery.id, {
+                        text: '❌ Seul l\'administrateur principal peut gérer les admins',
+                        show_alert: true
+                    });
+                    return;
+                }
+                
+                const adminList = Array.from(admins).map(id => `• ${id}`).join('\n');
+                await updateMessage(chatId, messageId, 
+                    `👮‍♂️ Gestion des administrateurs\n\n` +
+                    `Admins actuels :\n${adminList}\n\n` +
+                    `Pour ajouter : /addadmin [ID]\n` +
+                    `Pour retirer : /removeadmin [ID]`,
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
+                );
+                break;
+
+            default:
+                // Gestion des callbacks dynamiques
+                if (data.startsWith('social_')) {
+                    const socialIndex = parseInt(data.replace('social_', ''));
+                    if (config.socialNetworks && config.socialNetworks[socialIndex]) {
+                        const social = config.socialNetworks[socialIndex];
+                        await bot.answerCallbackQuery(callbackQuery.id, {
+                            text: `Ouverture de ${social.name}...`,
+                            url: social.url
+                        });
+                    }
+                } else if (data.startsWith('edit_social_')) {
+                    if (!admins.has(userId)) return;
+                    const index = parseInt(data.replace('edit_social_', ''));
+                    userStates[chatId] = { 
+                        action: 'editing_social', 
+                        socialIndex: index 
+                    };
+                    const social = config.socialNetworks[index];
+                    await updateMessage(chatId, messageId, 
+                        `✏️ Modification de ${social.name}\n\n` +
+                        `URL actuelle : ${social.url}\n` +
+                        `Icône actuelle : ${social.icon || '🔗'}\n\n` +
+                        `Envoyez la nouvelle URL :`,
+                        { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'edit_social' }]] }}
+                    );
+                } else if (data.startsWith('delete_social_')) {
+                    if (!admins.has(userId)) return;
+                    const index = parseInt(data.replace('delete_social_', ''));
+                    const social = config.socialNetworks[index];
+                    userStates[chatId] = { 
+                        action: 'confirming_delete_social', 
+                        socialIndex: index 
+                    };
+                    await updateMessage(chatId, messageId, 
+                        `⚠️ Êtes-vous sûr de vouloir supprimer ${social.name} ?`,
+                        { reply_markup: getConfirmKeyboard() }
+                    );
+                } else if (data === 'confirm_yes' && userStates[chatId]?.action === 'confirming_delete_social') {
+                    if (!admins.has(userId)) return;
+                    const index = userStates[chatId].socialIndex;
+                    const socialName = config.socialNetworks[index].name;
+                    config.socialNetworks.splice(index, 1);
+                    saveConfig(config);
+                    delete userStates[chatId];
+                    await updateMessage(chatId, messageId, 
+                        `✅ ${socialName} a été supprimé avec succès.`,
+                        { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'manage_social' }]] }}
+                    );
+                } else if (data === 'confirm_no' && userStates[chatId]?.action === 'confirming_delete_social') {
+                    delete userStates[chatId];
+                    await updateMessage(chatId, messageId, 
+                        '❌ Suppression annulée.',
+                        { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'delete_social' }]] }}
+                    );
+                } else {
+                    console.log(`⚠️ Callback non géré: ${data}`);
+                }
+        }
+    } catch (error) {
+        console.error('❌ Erreur dans callback_query handler:', error);
+        console.error('Stack trace:', error.stack);
+        
+        // Essayer de répondre au callback même en cas d'erreur
+        try {
+            await bot.answerCallbackQuery(callbackQuery.id, {
+                text: '❌ Une erreur s\'est produite. Veuillez réessayer.',
+                show_alert: true
+            });
+        } catch (answerError) {
+            console.error('Erreur lors de la réponse au callback:', answerError);
+        }
     }
 });
 
