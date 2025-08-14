@@ -840,6 +840,6 @@ app.listen(PORT, async () => {
     }
     
     console.log('🤖 Bot démarré avec succès en mode webhook!');
-    console.log(`📱 Bot: @${process.env.BOT_USERNAME || 'votre_bot'}`);
+    console.log(`📱 Bot: @ParisCoffeee_bot`);
     console.log(`👤 Admin ID: ${ADMIN_ID}`);
 });

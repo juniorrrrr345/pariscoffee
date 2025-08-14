@@ -1,5 +1,7 @@
 # 📋 Configuration Complète pour Render - Bot Telegram Webhook
 
+## 🤖 **Bot Telegram : @ParisCoffeee_bot**
+
 ## 🚀 Configuration du Service sur Render
 
 ### 1️⃣ **Paramètres du Service**
@@ -114,14 +116,14 @@ Vous devriez voir :
   pending_update_count: 0
 }
 🤖 Bot démarré avec succès en mode webhook!
-📱 Bot: @jsjshsheejdbot
+📱 Bot: @ParisCoffeee_bot
 👤 Admin ID: 7670522278
 ```
 
 ### Test sur Telegram
 
 1. Ouvrez Telegram
-2. Cherchez `@jsjshsheejdbot`
+2. Cherchez `@ParisCoffeee_bot`
 3. Envoyez `/start`
 4. Le bot devrait répondre immédiatement
 
