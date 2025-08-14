@@ -340,6 +340,19 @@ bot.on('callback_query', async (callbackQuery) => {
             await sendWelcomeMessage(chatId, messageId, callbackQuery.from);
             break;
 
+        case 'info':
+            // Afficher les informations
+            const infoText = config.infoText || 'Aucune information disponible.';
+            await updateMessage(chatId, messageId, infoText, {
+                parse_mode: 'HTML',
+                reply_markup: {
+                    inline_keyboard: [[
+                        { text: '⬅️ Retour', callback_data: 'back_to_main' }
+                    ]]
+                }
+            });
+            break;
+
         case 'admin_menu':
             if (!admins.has(userId)) {
                 await bot.answerCallbackQuery(callbackQuery.id, {
@@ -353,7 +366,7 @@ bot.on('callback_query', async (callbackQuery) => {
             });
             break;
 
-        case 'edit_welcome':
+        case 'admin_edit_welcome':
             if (!admins.has(userId)) return;
             userStates[chatId] = { action: 'editing_welcome' };
             await updateMessage(chatId, messageId, 
@@ -368,7 +381,7 @@ bot.on('callback_query', async (callbackQuery) => {
             );
             break;
 
-        case 'edit_welcome_image':
+        case 'admin_edit_photo':
             if (!admins.has(userId)) return;
             userStates[chatId] = { action: 'editing_welcome_image' };
             await updateMessage(chatId, messageId, 
@@ -378,95 +391,58 @@ bot.on('callback_query', async (callbackQuery) => {
             );
             break;
 
-        case 'manage_social':
+        case 'admin_edit_miniapp':
+            if (!admins.has(userId)) return;
+            userStates[chatId] = { action: 'editing_miniapp_name' };
+            const currentMiniApp = config.miniApp ? 
+                `Nom: ${config.miniApp.text || 'Non défini'}\nURL: ${config.miniApp.url || 'Non défini'}` : 
+                'Aucune mini application configurée';
+            await updateMessage(chatId, messageId, 
+                `📱 Mini Application actuelle:\n\n${currentMiniApp}\n\n` +
+                `Entrez le nom du bouton pour la mini application:`,
+                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
+            );
+            break;
+
+        case 'admin_manage_social':
             if (!admins.has(userId)) return;
             await updateMessage(chatId, messageId, '📱 Gestion des réseaux sociaux', {
-                reply_markup: getSocialManageKeyboard()
+                reply_markup: getSocialManageKeyboard(config)
             });
             break;
 
-        case 'add_social':
+        case 'admin_add_social':
             if (!admins.has(userId)) return;
             userStates[chatId] = { action: 'adding_social_name' };
             await updateMessage(chatId, messageId, 
                 '➕ Ajout d\'un réseau social\n\n' +
                 '1️⃣ Envoyez le nom du réseau social (ex: Instagram, Twitter, etc.)',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'manage_social' }]] }}
+                { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'admin_manage_social' }]] }}
             );
             break;
 
-        case 'edit_social':
+        case 'admin_edit_info':
             if (!admins.has(userId)) return;
-            if (!config.socialNetworks || config.socialNetworks.length === 0) {
-                await bot.answerCallbackQuery(callbackQuery.id, {
-                    text: 'Aucun réseau social configuré',
-                    show_alert: true
-                });
-                return;
-            }
-            
-            const editButtons = config.socialNetworks.map((social, index) => [{
-                text: `${social.icon || '🔗'} ${social.name}`,
-                callback_data: `edit_social_${index}`
-            }]);
-            editButtons.push([{ text: '🔙 Retour', callback_data: 'manage_social' }]);
-            
-            await updateMessage(chatId, messageId, '✏️ Sélectionnez le réseau social à modifier :', {
-                reply_markup: { inline_keyboard: editButtons }
-            });
-            break;
-
-        case 'delete_social':
-            if (!admins.has(userId)) return;
-            if (!config.socialNetworks || config.socialNetworks.length === 0) {
-                await bot.answerCallbackQuery(callbackQuery.id, {
-                    text: 'Aucun réseau social configuré',
-                    show_alert: true
-                });
-                return;
-            }
-            
-            const deleteButtons = config.socialNetworks.map((social, index) => [{
-                text: `🗑 ${social.name}`,
-                callback_data: `delete_social_${index}`
-            }]);
-            deleteButtons.push([{ text: '🔙 Retour', callback_data: 'manage_social' }]);
-            
-            await updateMessage(chatId, messageId, '🗑 Sélectionnez le réseau social à supprimer :', {
-                reply_markup: { inline_keyboard: deleteButtons }
-            });
-            break;
-
-        case 'social_layout':
-            if (!admins.has(userId)) return;
+            userStates[chatId] = { action: 'editing_info' };
+            const currentInfo = config.infoText || 'Aucune information configurée';
             await updateMessage(chatId, messageId, 
-                '📐 Disposition des boutons de réseaux sociaux\n\n' +
-                `Disposition actuelle : ${config.socialLayout === 'horizontal' ? 'Horizontal (2 par ligne)' : 'Vertical (1 par ligne)'}`,
-                { reply_markup: getSocialLayoutKeyboard(config.socialLayout) }
+                `ℹ️ Informations actuelles:\n\n${currentInfo}\n\n` +
+                `Envoyez le nouveau texte pour les informations:`,
+                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
             );
             break;
 
-        case 'layout_vertical':
+        case 'admin_broadcast':
             if (!admins.has(userId)) return;
-            config.socialLayout = 'vertical';
-            saveConfig(config);
+            userStates[chatId] = { action: 'broadcasting' };
             await updateMessage(chatId, messageId, 
-                '✅ Disposition changée en vertical (1 bouton par ligne)',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'manage_social' }]] }}
+                '📢 Envoyez le message à diffuser à tous les utilisateurs.\n\n' +
+                '⚠️ Ce message sera envoyé à tous les utilisateurs du bot.',
+                { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'admin_menu' }]] }}
             );
             break;
 
-        case 'layout_horizontal':
-            if (!admins.has(userId)) return;
-            config.socialLayout = 'horizontal';
-            saveConfig(config);
-            await updateMessage(chatId, messageId, 
-                '✅ Disposition changée en horizontal (2 boutons par ligne)',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'manage_social' }]] }}
-            );
-            break;
-
-        case 'stats':
+        case 'admin_stats':
             if (!admins.has(userId)) return;
             const stats = `📊 Statistiques du bot\n\n` +
                 `👥 Utilisateurs totaux : ${users.size}\n` +
@@ -478,17 +454,7 @@ bot.on('callback_query', async (callbackQuery) => {
             });
             break;
 
-        case 'broadcast':
-            if (!admins.has(userId)) return;
-            userStates[chatId] = { action: 'broadcasting' };
-            await updateMessage(chatId, messageId, 
-                '📢 Envoyez le message à diffuser à tous les utilisateurs.\n\n' +
-                '⚠️ Ce message sera envoyé à tous les utilisateurs du bot.',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'admin_menu' }]] }}
-            );
-            break;
-
-        case 'manage_admins':
+        case 'admin_manage_admins':
             if (userId !== ADMIN_ID) {
                 await bot.answerCallbackQuery(callbackQuery.id, {
                     text: '❌ Seul l\'administrateur principal peut gérer les admins',
@@ -507,9 +473,42 @@ bot.on('callback_query', async (callbackQuery) => {
             );
             break;
 
+        case 'admin_social_layout':
+            if (!admins.has(userId)) return;
+            await updateMessage(chatId, messageId, 
+                '📐 Choisissez le nombre de boutons par ligne:',
+                { reply_markup: getSocialLayoutKeyboard() }
+            );
+            break;
+
+        case 'admin_close':
+            // Fermer le menu admin
+            await deleteActiveMessage(chatId);
+            break;
+
         default:
             // Gestion des callbacks dynamiques
-            if (data.startsWith('social_')) {
+            if (data.startsWith('social_layout_')) {
+                if (!admins.has(userId)) return;
+                const count = parseInt(data.replace('social_layout_', ''));
+                config.socialButtonsPerRow = count;
+                saveConfig(config);
+                await updateMessage(chatId, messageId, 
+                    `✅ Disposition changée : ${count} bouton(s) par ligne`,
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_manage_social' }]] }}
+                );
+            } else if (data.startsWith('admin_delete_social_')) {
+                if (!admins.has(userId)) return;
+                const index = parseInt(data.replace('admin_delete_social_', ''));
+                if (config.socialNetworks && config.socialNetworks[index]) {
+                    config.socialNetworks.splice(index, 1);
+                    saveConfig(config);
+                    await updateMessage(chatId, messageId, 
+                        '✅ Réseau social supprimé avec succès.',
+                        { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_manage_social' }]] }}
+                    );
+                }
+            } else if (data.startsWith('social_')) {
                 const socialIndex = parseInt(data.replace('social_', ''));
                 if (config.socialNetworks && config.socialNetworks[socialIndex]) {
                     const social = config.socialNetworks[socialIndex];
@@ -518,50 +517,6 @@ bot.on('callback_query', async (callbackQuery) => {
                         url: social.url
                     });
                 }
-            } else if (data.startsWith('edit_social_')) {
-                if (!admins.has(userId)) return;
-                const index = parseInt(data.replace('edit_social_', ''));
-                userStates[chatId] = { 
-                    action: 'editing_social', 
-                    socialIndex: index 
-                };
-                const social = config.socialNetworks[index];
-                await updateMessage(chatId, messageId, 
-                    `✏️ Modification de ${social.name}\n\n` +
-                    `URL actuelle : ${social.url}\n` +
-                    `Icône actuelle : ${social.icon || '🔗'}\n\n` +
-                    `Envoyez la nouvelle URL :`,
-                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'edit_social' }]] }}
-                );
-            } else if (data.startsWith('delete_social_')) {
-                if (!admins.has(userId)) return;
-                const index = parseInt(data.replace('delete_social_', ''));
-                const social = config.socialNetworks[index];
-                userStates[chatId] = { 
-                    action: 'confirming_delete_social', 
-                    socialIndex: index 
-                };
-                await updateMessage(chatId, messageId, 
-                    `⚠️ Êtes-vous sûr de vouloir supprimer ${social.name} ?`,
-                    { reply_markup: getConfirmKeyboard() }
-                );
-            } else if (data === 'confirm_yes' && userStates[chatId]?.action === 'confirming_delete_social') {
-                if (!admins.has(userId)) return;
-                const index = userStates[chatId].socialIndex;
-                const socialName = config.socialNetworks[index].name;
-                config.socialNetworks.splice(index, 1);
-                saveConfig(config);
-                delete userStates[chatId];
-                await updateMessage(chatId, messageId, 
-                    `✅ ${socialName} a été supprimé avec succès.`,
-                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'manage_social' }]] }}
-                );
-            } else if (data === 'confirm_no' && userStates[chatId]?.action === 'confirming_delete_social') {
-                delete userStates[chatId];
-                await updateMessage(chatId, messageId, 
-                    '❌ Suppression annulée.',
-                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'delete_social' }]] }}
-                );
             }
     }
 });
@@ -592,6 +547,47 @@ bot.on('message', async (msg) => {
             }
             break;
 
+        case 'editing_info':
+            if (!admins.has(userId)) return;
+            if (msg.text) {
+                config.infoText = msg.text;
+                saveConfig(config);
+                delete userStates[chatId];
+                await sendNewMessage(chatId, 
+                    '✅ Informations mises à jour avec succès !',
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
+                );
+            }
+            break;
+
+        case 'editing_miniapp_name':
+            if (!admins.has(userId)) return;
+            if (msg.text) {
+                if (!config.miniApp) config.miniApp = {};
+                config.miniApp.text = msg.text;
+                userStates[chatId] = { action: 'editing_miniapp_url' };
+                await sendNewMessage(chatId, 
+                    `📱 Nom enregistré: ${msg.text}\n\n` +
+                    `Maintenant, envoyez l'URL de la mini application:`,
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'admin_menu' }]] }}
+                );
+            }
+            break;
+
+        case 'editing_miniapp_url':
+            if (!admins.has(userId)) return;
+            if (msg.text) {
+                if (!config.miniApp) config.miniApp = {};
+                config.miniApp.url = msg.text;
+                saveConfig(config);
+                delete userStates[chatId];
+                await sendNewMessage(chatId, 
+                    '✅ Mini application configurée avec succès !',
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
+                );
+            }
+            break;
+
         case 'adding_social_name':
             if (!admins.has(userId)) return;
             if (msg.text) {
@@ -602,7 +598,7 @@ bot.on('message', async (msg) => {
                 await sendNewMessage(chatId, 
                     `2️⃣ Maintenant, envoyez l'URL pour ${msg.text}\n\n` +
                     `Format : https://...`,
-                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'manage_social' }]] }}
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'admin_manage_social' }]] }}
                 );
             }
             break;
@@ -639,7 +635,7 @@ bot.on('message', async (msg) => {
                 delete userStates[chatId];
                 await sendNewMessage(chatId, 
                     `✅ ${state.socialName} a été ajouté avec succès !`,
-                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'manage_social' }]] }}
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_manage_social' }]] }}
                 );
             }
             break;
@@ -671,7 +667,7 @@ bot.on('message', async (msg) => {
                 delete userStates[chatId];
                 await sendNewMessage(chatId, 
                     `✅ ${config.socialNetworks[state.socialIndex].name} a été mis à jour avec succès !`,
-                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'manage_social' }]] }}
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_manage_social' }]] }}
                 );
             }
             break;
