@@ -232,7 +232,20 @@ async function updateMessage(chatId, messageId, text, options = {}) {
     }
 }
 
-// Fonction pour envoyer le message d'accueil
+// Fonction pour envoyer le message d'info
+async function sendInfoMessage(chatId, messageId) {
+    const infoText = config.infoText || 'Aucune information disponible.';
+    await updateMessage(chatId, messageId, infoText, {
+        parse_mode: 'HTML',
+        reply_markup: {
+            inline_keyboard: [[
+                { text: '⬅️ Retour', callback_data: 'back_to_main' }
+            ]]
+        }
+    });
+}
+
+// Fonction pour envoyer le message de bienvenue
 async function sendWelcomeMessage(chatId, editMessageId = null, userInfo = null) {
     try {
         let personalizedMessage = config.welcomeMessage || 'Bienvenue !';
@@ -319,10 +332,20 @@ bot.on('callback_query', async (callbackQuery) => {
     const userId = callbackQuery.from.id;
     const data = callbackQuery.data;
 
-    // Répondre au callback pour éviter le spinner
-    await bot.answerCallbackQuery(callbackQuery.id);
+    // Répondre immédiatement au callback pour éviter l'erreur de timeout
+    try {
+        await bot.answerCallbackQuery(callbackQuery.id);
+    } catch (error) {
+        // Ignorer les erreurs de callbacks expirés
+        if (error.message && error.message.includes('query is too old')) {
+            console.log('Callback expiré ignoré:', callbackQuery.id);
+            return;
+        }
+        console.error('Erreur lors de la réponse au callback:', error.message);
+        return;
+    }
 
-    // Vérifier si l'utilisateur est enregistré
+    // Ajouter l'utilisateur s'il n'existe pas
     if (!users.has(userId)) {
         users.add(userId);
         saveUsers();
@@ -333,191 +356,340 @@ bot.on('callback_query', async (callbackQuery) => {
         });
     }
 
-    // Gestion des différentes actions
-    switch(data) {
-        case 'back_to_main':
-            delete userStates[chatId];
-            await sendWelcomeMessage(chatId, messageId, callbackQuery.from);
-            break;
+    try {
+        switch(data) {
+            case 'back_to_main':
+                delete userStates[chatId];
+                await sendWelcomeMessage(chatId, messageId, callbackQuery.from);
+                break;
 
-        case 'info':
-            // Afficher les informations
-            const infoText = config.infoText || 'Aucune information disponible.';
-            await updateMessage(chatId, messageId, infoText, {
-                parse_mode: 'HTML',
-                reply_markup: {
-                    inline_keyboard: [[
-                        { text: '⬅️ Retour', callback_data: 'back_to_main' }
-                    ]]
-                }
-            });
-            break;
+            case 'info':
+                await sendInfoMessage(chatId, messageId);
+                break;
 
-        case 'admin_menu':
-            if (!admins.has(userId)) {
-                await bot.answerCallbackQuery(callbackQuery.id, {
-                    text: '❌ Accès refusé',
-                    show_alert: true
-                });
-                return;
-            }
-            await updateMessage(chatId, messageId, '🔧 Menu Administrateur', {
-                reply_markup: getAdminKeyboard()
-            });
-            break;
-
-        case 'admin_edit_welcome':
-            if (!admins.has(userId)) return;
-            userStates[chatId] = { action: 'editing_welcome' };
-            await updateMessage(chatId, messageId, 
-                '✏️ Envoyez le nouveau message d\'accueil.\n\n' +
-                '💡 Vous pouvez utiliser ces variables :\n' +
-                '• {firstname} - Prénom de l\'utilisateur\n' +
-                '• {lastname} - Nom de famille\n' +
-                '• {username} - @username\n' +
-                '• {fullname} - Nom complet\n\n' +
-                'Vous pouvez aussi utiliser du HTML pour formater le texte.',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
-            );
-            break;
-
-        case 'admin_edit_photo':
-            if (!admins.has(userId)) return;
-            userStates[chatId] = { action: 'editing_welcome_image' };
-            await updateMessage(chatId, messageId, 
-                '🖼 Envoyez la nouvelle image d\'accueil.\n\n' +
-                '⚠️ L\'image sera affichée avec le message d\'accueil.',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
-            );
-            break;
-
-        case 'admin_edit_miniapp':
-            if (!admins.has(userId)) return;
-            userStates[chatId] = { action: 'editing_miniapp_name' };
-            const currentMiniApp = config.miniApp ? 
-                `Nom: ${config.miniApp.text || 'Non défini'}\nURL: ${config.miniApp.url || 'Non défini'}` : 
-                'Aucune mini application configurée';
-            await updateMessage(chatId, messageId, 
-                `📱 Mini Application actuelle:\n\n${currentMiniApp}\n\n` +
-                `Entrez le nom du bouton pour la mini application:`,
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
-            );
-            break;
-
-        case 'admin_manage_social':
-            if (!admins.has(userId)) return;
-            await updateMessage(chatId, messageId, '📱 Gestion des réseaux sociaux', {
-                reply_markup: getSocialManageKeyboard(config)
-            });
-            break;
-
-        case 'admin_add_social':
-            if (!admins.has(userId)) return;
-            userStates[chatId] = { action: 'adding_social_name' };
-            await updateMessage(chatId, messageId, 
-                '➕ Ajout d\'un réseau social\n\n' +
-                '1️⃣ Envoyez le nom du réseau social (ex: Instagram, Twitter, etc.)',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'admin_manage_social' }]] }}
-            );
-            break;
-
-        case 'admin_edit_info':
-            if (!admins.has(userId)) return;
-            userStates[chatId] = { action: 'editing_info' };
-            const currentInfo = config.infoText || 'Aucune information configurée';
-            await updateMessage(chatId, messageId, 
-                `ℹ️ Informations actuelles:\n\n${currentInfo}\n\n` +
-                `Envoyez le nouveau texte pour les informations:`,
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
-            );
-            break;
-
-        case 'admin_broadcast':
-            if (!admins.has(userId)) return;
-            userStates[chatId] = { action: 'broadcasting' };
-            await updateMessage(chatId, messageId, 
-                '📢 Envoyez le message à diffuser à tous les utilisateurs.\n\n' +
-                '⚠️ Ce message sera envoyé à tous les utilisateurs du bot.',
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Annuler', callback_data: 'admin_menu' }]] }}
-            );
-            break;
-
-        case 'admin_stats':
-            if (!admins.has(userId)) return;
-            const stats = `📊 Statistiques du bot\n\n` +
-                `👥 Utilisateurs totaux : ${users.size}\n` +
-                `👮‍♂️ Administrateurs : ${admins.size}\n` +
-                `📱 Réseaux sociaux : ${config.socialNetworks ? config.socialNetworks.length : 0}`;
-            
-            await updateMessage(chatId, messageId, stats, {
-                reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }
-            });
-            break;
-
-        case 'admin_manage_admins':
-            if (userId !== ADMIN_ID) {
-                await bot.answerCallbackQuery(callbackQuery.id, {
-                    text: '❌ Seul l\'administrateur principal peut gérer les admins',
-                    show_alert: true
-                });
-                return;
-            }
-            
-            const adminList = Array.from(admins).map(id => `• ${id}`).join('\n');
-            await updateMessage(chatId, messageId, 
-                `👮‍♂️ Gestion des administrateurs\n\n` +
-                `Admins actuels :\n${adminList}\n\n` +
-                `Pour ajouter : /addadmin [ID]\n` +
-                `Pour retirer : /removeadmin [ID]`,
-                { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
-            );
-            break;
-
-        case 'admin_social_layout':
-            if (!admins.has(userId)) return;
-            await updateMessage(chatId, messageId, 
-                '📐 Choisissez le nombre de boutons par ligne:',
-                { reply_markup: getSocialLayoutKeyboard() }
-            );
-            break;
-
-        case 'admin_close':
-            // Fermer le menu admin
-            await deleteActiveMessage(chatId);
-            break;
-
-        default:
-            // Gestion des callbacks dynamiques
-            if (data.startsWith('social_layout_')) {
-                if (!admins.has(userId)) return;
-                const count = parseInt(data.replace('social_layout_', ''));
-                config.socialButtonsPerRow = count;
-                saveConfig(config);
-                await updateMessage(chatId, messageId, 
-                    `✅ Disposition changée : ${count} bouton(s) par ligne`,
-                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_manage_social' }]] }}
-                );
-            } else if (data.startsWith('admin_delete_social_')) {
-                if (!admins.has(userId)) return;
-                const index = parseInt(data.replace('admin_delete_social_', ''));
-                if (config.socialNetworks && config.socialNetworks[index]) {
-                    config.socialNetworks.splice(index, 1);
-                    saveConfig(config);
-                    await updateMessage(chatId, messageId, 
-                        '✅ Réseau social supprimé avec succès.',
-                        { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_manage_social' }]] }}
-                    );
-                }
-            } else if (data.startsWith('social_')) {
-                const socialIndex = parseInt(data.replace('social_', ''));
-                if (config.socialNetworks && config.socialNetworks[socialIndex]) {
-                    const social = config.socialNetworks[socialIndex];
+            case 'admin_menu':
+                if (!admins.has(userId)) {
                     await bot.answerCallbackQuery(callbackQuery.id, {
-                        text: `Ouverture de ${social.name}...`,
-                        url: social.url
+                        text: '❌ Accès refusé. Seuls les administrateurs peuvent accéder à ce menu.',
+                        show_alert: true
                     });
+                    return;
                 }
-            }
+                delete userStates[chatId];
+                await updateMessage(chatId, messageId, '🔧 Menu Administrateur', {
+                    reply_markup: getAdminKeyboard()
+                });
+                break;
+
+            case 'admin_edit_welcome':
+                if (!admins.has(userId)) return;
+                userStates[chatId] = { action: 'editing_welcome', messageId };
+                await updateMessage(chatId, messageId, '📝 Envoyez le nouveau message d\'accueil:', {
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '❌ Annuler', callback_data: 'admin_menu' }
+                        ]]
+                    }
+                });
+                break;
+
+            case 'admin_edit_photo':
+                if (!admins.has(userId)) return;
+                userStates[chatId] = { action: 'editing_welcome_image', messageId };
+                await updateMessage(chatId, messageId, '📸 Envoyez la nouvelle photo d\'accueil:', {
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '❌ Annuler', callback_data: 'admin_menu' }
+                        ]]
+                    }
+                });
+                break;
+
+            case 'admin_edit_miniapp':
+                if (!admins.has(userId)) return;
+                userStates[chatId] = { action: 'editing_miniapp_name', messageId };
+                await updateMessage(chatId, messageId, '📱 Entrez le nom de la mini application:', {
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '❌ Annuler', callback_data: 'admin_menu' }
+                        ]]
+                    }
+                });
+                break;
+
+            case 'admin_edit_info':
+                if (!admins.has(userId)) return;
+                userStates[chatId] = { action: 'editing_info', messageId };
+                await updateMessage(chatId, messageId, 'ℹ️ Entrez les nouvelles informations:', {
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '❌ Annuler', callback_data: 'admin_menu' }
+                        ]]
+                    }
+                });
+                break;
+
+            case 'admin_manage_social':
+                if (!admins.has(userId)) return;
+                await updateMessage(chatId, messageId, '🌐 Gestion des réseaux sociaux', {
+                    reply_markup: getSocialManageKeyboard(config)
+                });
+                break;
+
+            case 'admin_add_social':
+                if (!admins.has(userId)) return;
+                userStates[chatId] = { action: 'adding_social_name', messageId };
+                await updateMessage(chatId, messageId, '📝 Entrez le nom du réseau social:', {
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '❌ Annuler', callback_data: 'admin_manage_social' }
+                        ]]
+                    }
+                });
+                break;
+
+            case 'admin_social_layout':
+                if (!admins.has(userId)) return;
+                await updateMessage(chatId, messageId, '📐 Choisissez la disposition des boutons:', {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '1️⃣ Un par ligne', callback_data: 'social_layout_1' }],
+                            [{ text: '2️⃣ Deux par ligne', callback_data: 'social_layout_2' }],
+                            [{ text: '3️⃣ Trois par ligne', callback_data: 'social_layout_3' }],
+                            [{ text: '⬅️ Retour', callback_data: 'admin_manage_social' }]
+                        ]
+                    }
+                });
+                break;
+
+            case 'admin_broadcast':
+                if (!admins.has(userId)) return;
+                userStates[chatId] = { action: 'broadcast_message', messageId };
+                await updateMessage(chatId, messageId, 
+                    `📢 Envoyez le message à diffuser à tous les utilisateurs.\n\n` +
+                    `👥 ${users.size - admins.size} utilisateurs recevront ce message.`, {
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '❌ Annuler', callback_data: 'admin_menu' }
+                        ]]
+                    }
+                });
+                break;
+
+            case 'admin_manage_admins':
+                if (!admins.has(userId)) return;
+                if (userId !== ADMIN_ID) {
+                    await bot.answerCallbackQuery(callbackQuery.id, {
+                        text: '❌ Seul l\'administrateur principal peut gérer les autres administrateurs.',
+                        show_alert: true
+                    });
+                    return;
+                }
+                const adminsList = await Promise.all(Array.from(admins).map(async (id) => {
+                    try {
+                        const user = await BotUser.findOne({ userId: id });
+                        const name = user ? `${user.firstName} ${user.lastName}` : 'Utilisateur inconnu';
+                        const username = user ? (user.username ? `@${user.username}` : '') : '';
+                        if (id === ADMIN_ID) {
+                            return `👑 **${name}**${username ? ` (${username})` : ''}\n   └─ ID: \`${id}\` _(Principal)_`;
+                        }
+                        return `👤 **${name}**${username ? ` (${username})` : ''}\n   └─ ID: \`${id}\``;
+                    } catch (error) {
+                        if (id === ADMIN_ID) return `👑 ID: \`${id}\` _(Principal)_`;
+                        return `👤 ID: \`${id}\``;
+                    }
+                }));
+                
+                const adminCount = admins.size;
+                await updateMessage(chatId, messageId, 
+                    `👥 **Gestion des Administrateurs**\n\n` +
+                    `📊 Total: ${adminCount} administrateur${adminCount > 1 ? 's' : ''}\n\n` +
+                    `Liste des administrateurs:\n${adminsList.join('\n\n')}`, {
+                    parse_mode: 'Markdown',
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '➕ Ajouter un admin', callback_data: 'admin_add_admin' }],
+                            [{ text: '➖ Retirer un admin', callback_data: 'admin_remove_admin' }],
+                            [{ text: '⬅️ Retour', callback_data: 'admin_menu' }]
+                        ]
+                    }
+                });
+                break;
+
+            case 'admin_add_admin':
+                if (!admins.has(userId) || userId !== ADMIN_ID) return;
+                userStates[chatId] = { action: 'adding_admin', messageId };
+                await updateMessage(chatId, messageId, 
+                    `➕ **Ajouter un Administrateur**\n\n` +
+                    `Envoyez l'ID de l'utilisateur à promouvoir administrateur.\n\n` +
+                    `💡 _Pour obtenir l'ID d'un utilisateur, demandez-lui d'envoyer /myid au bot._`, {
+                    parse_mode: 'Markdown',
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '❌ Annuler', callback_data: 'admin_manage_admins' }
+                        ]]
+                    }
+                });
+                break;
+
+            case 'admin_remove_admin':
+                if (!admins.has(userId) || userId !== ADMIN_ID) return;
+                const removableAdmins = Array.from(admins).filter(id => id !== ADMIN_ID);
+                if (removableAdmins.length === 0) {
+                    await bot.answerCallbackQuery(callbackQuery.id, {
+                        text: '⚠️ Aucun administrateur à retirer.',
+                        show_alert: true
+                    });
+                    return;
+                }
+                
+                const removableList = await Promise.all(removableAdmins.map(async (id) => {
+                    try {
+                        const user = await BotUser.findOne({ userId: id });
+                        const name = user ? `${user.firstName} ${user.lastName}` : 'Utilisateur';
+                        const username = user ? (user.username ? `@${user.username}` : '') : '';
+                        return [{ 
+                            text: `❌ ${name}${username ? ` (${username})` : ''}`, 
+                            callback_data: `remove_admin_${id}` 
+                        }];
+                    } catch (error) {
+                        return [{ text: `❌ ID: ${id}`, callback_data: `remove_admin_${id}` }];
+                    }
+                }));
+                
+                removableList.push([{ text: '⬅️ Retour', callback_data: 'admin_manage_admins' }]);
+                
+                await updateMessage(chatId, messageId, 
+                    `➖ **Retirer un Administrateur**\n\n` +
+                    `Sélectionnez l'administrateur à retirer:`, {
+                    parse_mode: 'Markdown',
+                    reply_markup: { inline_keyboard: removableList }
+                });
+                break;
+
+            case 'admin_stats':
+                if (!admins.has(userId)) return;
+                const totalUsers = users.size;
+                const totalAdmins = admins.size;
+                const regularUsers = totalUsers - totalAdmins;
+                
+                let mongoStatus = '❌ Non connecté';
+                try {
+                    if (mongoose.connection.readyState === 1) {
+                        const dbUsers = await BotUser.countDocuments();
+                        mongoStatus = `✅ Connecté (${dbUsers} utilisateurs)`;
+                    }
+                } catch (error) {
+                    mongoStatus = '❌ Erreur de connexion';
+                }
+                
+                await updateMessage(chatId, messageId, 
+                    `📊 **Statistiques du Bot**\n\n` +
+                    `👥 **Utilisateurs**\n` +
+                    `├─ Total: ${totalUsers}\n` +
+                    `├─ Utilisateurs: ${regularUsers}\n` +
+                    `└─ Administrateurs: ${totalAdmins}\n\n` +
+                    `🗄️ **Base de données**\n` +
+                    `└─ MongoDB: ${mongoStatus}\n\n` +
+                    `🤖 **Bot**\n` +
+                    `├─ Mode: Webhook\n` +
+                    `├─ Version: 1.0.0\n` +
+                    `└─ Uptime: ${Math.floor(process.uptime() / 60)} minutes`, {
+                    parse_mode: 'Markdown',
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '⬅️ Retour', callback_data: 'admin_menu' }
+                        ]]
+                    }
+                });
+                break;
+
+            case 'admin_close':
+                if (!admins.has(userId)) return;
+                delete userStates[chatId];
+                await updateMessage(chatId, messageId, '✅ Panel administrateur fermé.\n\nUtilisez /admin pour rouvrir.');
+                break;
+
+            default:
+                // Gérer les callbacks dynamiques
+                if (data.startsWith('social_layout_')) {
+                    if (!admins.has(userId)) return;
+                    const layout = parseInt(data.split('_')[2]);
+                    config.socialButtonsPerRow = layout;
+                    saveConfig(config);
+                    await updateMessage(chatId, messageId, `✅ Disposition mise à jour: ${layout} bouton(s) par ligne`, {
+                        reply_markup: getSocialManageKeyboard(config)
+                    });
+                } else if (data.startsWith('admin_delete_social_')) {
+                    if (!admins.has(userId)) return;
+                    const index = parseInt(data.split('_')[3]);
+                    if (config.socialNetworks && config.socialNetworks[index]) {
+                        const removed = config.socialNetworks.splice(index, 1)[0];
+                        saveConfig(config);
+                        await updateMessage(chatId, messageId, `✅ "${removed.name}" supprimé!`, {
+                            reply_markup: getSocialManageKeyboard(config)
+                        });
+                    }
+                } else if (data.startsWith('remove_admin_')) {
+                    if (!admins.has(userId) || userId !== ADMIN_ID) return;
+                    const adminToRemove = parseInt(data.split('_')[2]);
+                    if (adminToRemove && adminToRemove !== ADMIN_ID) {
+                        await setAdmin(adminToRemove, false);
+                        
+                        // Notifier l'admin retiré
+                        try {
+                            await bot.sendMessage(adminToRemove, 
+                                `⚠️ **Notification**\n\n` +
+                                `Vos privilèges d'administrateur ont été révoqués.`, 
+                                { parse_mode: 'Markdown' }
+                            );
+                        } catch (error) {
+                            // L'utilisateur a peut-être bloqué le bot
+                        }
+                        
+                        await bot.answerCallbackQuery(callbackQuery.id, {
+                            text: '✅ Administrateur retiré avec succès',
+                            show_alert: false
+                        });
+                        
+                        // Rafraîchir la liste
+                        const adminsList = await Promise.all(Array.from(admins).map(async (id) => {
+                            try {
+                                const user = await BotUser.findOne({ userId: id });
+                                const name = user ? `${user.firstName} ${user.lastName}` : 'Utilisateur inconnu';
+                                const username = user ? (user.username ? `@${user.username}` : '') : '';
+                                if (id === ADMIN_ID) {
+                                    return `👑 **${name}**${username ? ` (${username})` : ''}\n   └─ ID: \`${id}\` _(Principal)_`;
+                                }
+                                return `👤 **${name}**${username ? ` (${username})` : ''}\n   └─ ID: \`${id}\``;
+                            } catch (error) {
+                                if (id === ADMIN_ID) return `👑 ID: \`${id}\` _(Principal)_`;
+                                return `👤 ID: \`${id}\``;
+                            }
+                        }));
+                        
+                        const adminCount = admins.size;
+                        await updateMessage(chatId, messageId, 
+                            `👥 **Gestion des Administrateurs**\n\n` +
+                            `✅ Administrateur retiré avec succès!\n\n` +
+                            `📊 Total: ${adminCount} administrateur${adminCount > 1 ? 's' : ''}\n\n` +
+                            `Liste des administrateurs:\n${adminsList.join('\n\n')}`, {
+                            parse_mode: 'Markdown',
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [{ text: '➕ Ajouter un admin', callback_data: 'admin_add_admin' }],
+                                    [{ text: '➖ Retirer un admin', callback_data: 'admin_remove_admin' }],
+                                    [{ text: '⬅️ Retour', callback_data: 'admin_menu' }]
+                                ]
+                            }
+                        });
+                    }
+                }
+                break;
+        }
+    } catch (error) {
+        console.error('Erreur lors du traitement du callback:', error);
+        // Ne pas faire crasher le bot
     }
 });
 
