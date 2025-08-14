@@ -30,7 +30,8 @@ Dans le dashboard Render, créez un nouveau **Web Service** avec ces paramètres
 Ajoutez ces variables dans la section **Environment** de Render :
 
 ```env
-BOT_TOKEN=8128299360:AAEWmbRLjkTaQYP17GsiGm5vhQv8AcJLKIY
+BOT_TOKEN=8386632716:AAGCr4UzrDvs4LElWI4LMHs2h4OpMG987us
+BOT_USERNAME=ParisCoffeee_bot
 ADMIN_ID=7670522278
 PORT=10000
 MONGODB_URI=mongodb+srv://coffeelivraison4:FCiljtFGv5iKaKL3@pariscoffee.x0f0tsy.mongodb.net/test?retryWrites=true&w=majority&appName=Pariscoffee
@@ -76,7 +77,8 @@ Cliquez sur **Advanced** et ajoutez toutes les variables une par une :
 
 | Key | Value |
 |-----|-------|
-| `BOT_TOKEN` | `8128299360:AAEWmbRLjkTaQYP17GsiGm5vhQv8AcJLKIY` |
+| `BOT_TOKEN` | `8386632716:AAGCr4UzrDvs4LElWI4LMHs2h4OpMG987us` |
+| `BOT_USERNAME` | `ParisCoffeee_bot` |
 | `ADMIN_ID` | `7670522278` |
 | `PORT` | `10000` |
 | `MONGODB_URI` | `mongodb+srv://coffeelivraison4:FCiljtFGv5iKaKL3@pariscoffee.x0f0tsy.mongodb.net/test?retryWrites=true&w=majority&appName=Pariscoffee` |
@@ -109,9 +111,9 @@ Vous devriez voir :
 🌐 Serveur démarré sur le port 10000
 ✅ Bot connecté à MongoDB
 ✅ Ancien webhook supprimé
-🔗 Webhook configuré: https://telegram-bot-webhook-xyz.onrender.com/bot8128299360:AAEWmbRLjkTaQYP17GsiGm5vhQv8AcJLKIY
+🔗 Webhook configuré: https://telegram-bot-webhook-xyz.onrender.com/bot8386632716:AAGCr4UzrDvs4LElWI4LMHs2h4OpMG987us
 ℹ️ Info webhook: {
-  url: 'https://telegram-bot-webhook-xyz.onrender.com/bot8128299360:AAEWmbRLjkTaQYP17GsiGm5vhQv8AcJLKIY',
+  url: 'https://telegram-bot-webhook-xyz.onrender.com/bot8386632716:AAGCr4UzrDvs4LElWI4LMHs2h4OpMG987us',
   has_custom_certificate: false,
   pending_update_count: 0
 }

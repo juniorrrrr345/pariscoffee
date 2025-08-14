@@ -8,8 +8,13 @@ services:
     envVars:
       - key: BOT_TOKEN
         sync: false
+        value: 8386632716:AAGCr4UzrDvs4LElWI4LMHs2h4OpMG987us
+      - key: BOT_USERNAME
+        sync: false
+        value: ParisCoffeee_bot
       - key: ADMIN_ID
         sync: false
+        value: 7670522278
       - key: WEBHOOK_URL
         sync: false
         value: https://telegram-bot-webhook.onrender.com
@@ -19,6 +24,9 @@ services:
       - key: MONGODB_URI
         sync: false
         value: mongodb+srv://coffeelivraison4:FCiljtFGv5iKaKL3@pariscoffee.x0f0tsy.mongodb.net/test?retryWrites=true&w=majority&appName=Pariscoffee
+      - key: NODE_ENV
+        sync: false
+        value: production
         
   # Note: Le mode webhook est recommandé pour Render (gratuit)
   # Le bot configurera automatiquement le webhook au démarrage
