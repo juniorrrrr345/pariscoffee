@@ -4,7 +4,8 @@
   "description": "Bot Telegram avec interface d'administration",
   "main": "bot.js",
   "scripts": {
-    "start": "node bot.js",
+    "start": "node bot-webhook.js",
+    "polling": "node bot.js",
     "webhook": "node bot-webhook.js",
     "dev": "nodemon bot.js"
   },

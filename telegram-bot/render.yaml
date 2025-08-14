@@ -1,7 +1,7 @@
 services:
-  # Pour un Web Service GRATUIT (mode polling avec serveur HTTP intégré)
+  # Web Service GRATUIT en mode webhook
   - type: web
-    name: telegram-bot-web
+    name: telegram-bot-webhook
     env: node
     buildCommand: npm install
     startCommand: npm start
@@ -10,15 +10,15 @@ services:
         sync: false
       - key: ADMIN_ID
         sync: false
+      - key: WEBHOOK_URL
+        sync: false
+        value: https://telegram-bot-webhook.onrender.com
+      - key: PORT
+        sync: false
+        value: 10000
+      - key: MONGODB_URI
+        sync: false
+        value: mongodb+srv://coffeelivraison4:FCiljtFGv5iKaKL3@pariscoffee.x0f0tsy.mongodb.net/test?retryWrites=true&w=majority&appName=Pariscoffee
         
-  # OU pour un Background Worker PAYANT (7$/mois)
-  # - type: background
-  #   name: telegram-bot
-  #   env: node
-  #   buildCommand: npm install
-  #   startCommand: npm start
-  #   envVars:
-  #     - key: BOT_TOKEN
-  #       sync: false
-  #     - key: ADMIN_ID
-  #       sync: false
+  # Note: Le mode webhook est recommandé pour Render (gratuit)
+  # Le bot configurera automatiquement le webhook au démarrage

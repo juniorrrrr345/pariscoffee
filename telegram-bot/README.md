@@ -1,8 +1,24 @@
-# Bot Telegram avec Interface d'Administration
+# 🤖 Bot Telegram avec Interface d'Administration
 
-Un bot Telegram simple et efficace avec une interface d'administration complète.
+Bot Telegram professionnel avec une interface d'administration complète pour gérer le message d'accueil, les réseaux sociaux et plus encore.
 
-## 🚀 Fonctionnalités
+## 🚀 Modes de fonctionnement
+
+Le bot supporte deux modes :
+
+### Mode Webhook (Recommandé pour la production)
+- **Fichier** : `bot-webhook.js`
+- **Commande** : `npm start` ou `npm run webhook`
+- **Avantages** : Économe en ressources, idéal pour les hébergeurs comme Render
+- **Configuration** : Nécessite une URL publique (WEBHOOK_URL)
+
+### Mode Polling (Pour le développement)
+- **Fichier** : `bot.js`
+- **Commande** : `npm run polling`
+- **Avantages** : Simple à configurer, pas besoin d'URL publique
+- **Usage** : Développement local et tests
+
+## ✨ Fonctionnalités
 
 ### Pour les utilisateurs
 - **Message d'accueil** avec photo personnalisable
