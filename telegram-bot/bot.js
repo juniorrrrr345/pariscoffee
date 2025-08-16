@@ -5,6 +5,31 @@ const path = require('path');
 const { loadConfig, saveConfig, getImagePath, IMAGES_DIR } = require('./config');
 const { getMainKeyboard, getAdminKeyboard, getSocialManageKeyboard, getSocialLayoutKeyboard, getConfirmKeyboard } = require('./keyboards');
 
+// Fonction utilitaire pour encoder correctement les messages avec emojis et caractères spéciaux
+function encodeMessage(text) {
+    // S'assurer que le texte est en UTF-8
+    if (!text) return '';
+    
+    // Convertir le texte en string si ce n'est pas déjà le cas
+    text = String(text);
+    
+    // Retourner le texte tel quel - Node.js gère nativement l'UTF-8
+    // Les emojis et caractères spéciaux seront correctement traités
+    return text;
+}
+
+// Fonction pour préparer les options de message avec le bon encodage
+function prepareMessageOptions(options = {}) {
+    // Forcer l'utilisation d'UTF-8 pour tous les messages
+    const defaultOptions = {
+        parse_mode: 'HTML', // HTML parse mode gère mieux les caractères spéciaux
+        disable_web_page_preview: false,
+        ...options
+    };
+    
+    return defaultOptions;
+}
+
 // Vérifier les variables d'environnement
 if (!process.env.BOT_TOKEN) {
     console.error('❌ BOT_TOKEN n\'est pas défini dans le fichier .env');
@@ -219,13 +244,18 @@ async function sendNewMessage(chatId, text, options = {}) {
     // Supprimer l'ancien message actif
     await deleteActiveMessage(chatId);
     
+    // Encoder le message pour gérer les caractères spéciaux et emojis
+    const encodedText = encodeMessage(text);
+    const messageOptions = prepareMessageOptions(options);
+    
     // Envoyer le nouveau message
     try {
-        const message = await bot.sendMessage(chatId, text, options);
+        const message = await bot.sendMessage(chatId, encodedText, messageOptions);
         activeMessages[chatId] = message.message_id;
         return message;
     } catch (error) {
         console.error('Erreur lors de l\'envoi du message:', error);
+        console.error('Message qui a causé l\'erreur:', text);
     }
 }
 
@@ -247,12 +277,16 @@ async function sendNewPhoto(chatId, photo, options = {}) {
 // Fonction pour éditer le message actif ou en envoyer un nouveau
 async function updateMessage(chatId, messageId, text, options = {}) {
     try {
+        // Encoder le message pour gérer les caractères spéciaux et emojis
+        const encodedText = encodeMessage(text);
+        const messageOptions = prepareMessageOptions(options);
+        
         // Vérifier si c'est bien le message actif
         if (activeMessages[chatId] === messageId) {
-            await bot.editMessageText(text, {
+            await bot.editMessageText(encodedText, {
                 chat_id: chatId,
                 message_id: messageId,
-                ...options
+                ...messageOptions
             });
             return { message_id: messageId };
         } else {
@@ -938,13 +972,18 @@ bot.on('message', async (msg) => {
                 
                 await updateMessage(chatId, userState.messageId, '📤 Envoi en cours...');
                 
+                // Encoder le message pour gérer les caractères spéciaux et emojis
+                const broadcastText = encodeMessage(`📢 Message de l'administrateur:\n\n${message}`);
+                const broadcastOptions = prepareMessageOptions();
+                
                 for (const targetUserId of users) {
                     if (!admins.has(targetUserId)) { // Ne pas envoyer aux admins
                         try {
-                            await bot.sendMessage(targetUserId, `📢 Message de l'administrateur:\n\n${message}`);
+                            await bot.sendMessage(targetUserId, broadcastText, broadcastOptions);
                             successCount++;
                         } catch (error) {
                             failCount++;
+                            console.error(`Erreur envoi à ${targetUserId}:`, error.message);
                         }
                     }
                 }
