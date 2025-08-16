@@ -87,11 +87,7 @@ try {
                 });
                 console.log('✅ Bot connecté à MongoDB');
                 await loadUsersFromMongoDB();
-                // Recharger la configuration après connexion MongoDB
-                if (config === null) {
-                    console.log('🔄 Chargement de la configuration depuis MongoDB...');
-                    await initializeConfig();
-                }
+                // Configuration déjà chargée, pas besoin de recharger
                 return true;
             } catch (err) {
                 retries++;
@@ -119,44 +115,23 @@ try {
 // État des utilisateurs et configuration
 const userStates = {};
 const activeMessages = {};
+
+// Charger la configuration immédiatement (toujours disponible)
 let config = null;
-
-// Charger la configuration de manière asynchrone
-async function initializeConfig() {
-    // Attendre la connexion MongoDB si elle existe
-    if (mongoConnectionPromise) {
-        console.log('⏳ Attente de la connexion MongoDB pour la configuration...');
-        try {
-            await mongoConnectionPromise;
-        } catch (error) {
-            console.error('⚠️ Erreur MongoDB:', error.message);
-        }
-    }
-    
-    config = await loadConfig();
-    
-    // S'assurer que config n'est jamais null
-    if (!config) {
-        console.error('❌ Configuration non chargée, utilisation de la config par défaut');
-        config = {
-            welcomeMessage: "🤖 Bienvenue sur notre bot!",
-            welcomeImage: null,
-            infoText: "ℹ️ Informations",
-            miniApp: { url: null, text: "🎮 Mini Application" },
-            socialNetworks: [],
-            socialButtonsPerRow: 3
-        };
-    }
-    
-    console.log('✅ Configuration initiale chargée');
-    if (config.welcomeMessage) {
-        console.log('📝 Message d\'accueil actuel:', config.welcomeMessage.substring(0, 50) + '...');
-    }
-    return config;
-}
-
-// Promesse pour la configuration
-const configPromise = initializeConfig().catch(console.error);
+loadConfig().then(loadedConfig => {
+    config = loadedConfig;
+    console.log('✅ Configuration chargée');
+}).catch(error => {
+    console.error('❌ Erreur de configuration, utilisation des valeurs par défaut');
+    config = {
+        welcomeMessage: "🤖 Bienvenue sur notre bot!",
+        welcomeImage: null,
+        infoText: "ℹ️ Informations",
+        miniApp: { url: null, text: "🎮 Mini Application" },
+        socialNetworks: [],
+        socialButtonsPerRow: 3
+    };
+});
 
 // Gestion des utilisateurs et admins
 const users = new Set();
@@ -361,9 +336,9 @@ bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
     
-    // Attendre que la configuration soit chargée
+    // S'assurer que la configuration est chargée
     if (!config) {
-        await configPromise;
+        config = await loadConfig();
     }
     
     // Sauvegarder l'utilisateur
@@ -403,18 +378,9 @@ bot.on('callback_query', async (callbackQuery) => {
     const userId = callbackQuery.from.id;
     const data = callbackQuery.data;
 
-    // Attendre que la configuration soit chargée
+    // S'assurer que la configuration est chargée
     if (!config) {
-        try {
-            await configPromise;
-        } catch (error) {
-            console.error('Erreur lors du chargement de la configuration:', error);
-            await bot.answerCallbackQuery(callbackQuery.id, {
-                text: '⚠️ Le bot est en cours d\'initialisation. Veuillez réessayer.',
-                show_alert: true
-            });
-            return;
-        }
+        config = await loadConfig();
     }
 
     // Répondre immédiatement au callback pour éviter l'erreur de timeout
@@ -792,7 +758,7 @@ bot.on('message', async (msg) => {
     // Attendre que la configuration soit chargée
     if (!config) {
         try {
-            await configPromise;
+            config = await loadConfig();
         } catch (error) {
             console.error('Erreur lors du chargement de la configuration:', error);
             await bot.sendMessage(chatId, '⚠️ Le bot est en cours d\'initialisation. Veuillez réessayer dans quelques secondes.');
@@ -985,7 +951,7 @@ bot.on('photo', async (msg) => {
     // Attendre que la configuration soit chargée
     if (!config) {
         try {
-            await configPromise;
+            config = await loadConfig();
         } catch (error) {
             console.error('Erreur lors du chargement de la configuration:', error);
             await bot.sendMessage(chatId, '⚠️ Le bot est en cours d\'initialisation. Veuillez réessayer dans quelques secondes.');
