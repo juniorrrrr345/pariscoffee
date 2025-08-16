@@ -1,7 +1,46 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-// Configuration par défaut qui sera TOUJOURS disponible
+// Connexion MongoDB avec options améliorées
+const mongoOptions = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    maxPoolSize: 10,
+    serverSelectionTimeoutMS: 5000,
+};
+
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://coffeelivraison4:FCiljtFGv5iKaKL3@pariscoffee.x0f0tsy.mongodb.net/?retryWrites=true&w=majority&appName=Pariscoffee', mongoOptions)
+    .then(() => {
+        console.log('✅ Connecté à MongoDB');
+        console.log('📍 Database:', mongoose.connection.name);
+    })
+    .catch(err => {
+        console.error('❌ Erreur connexion MongoDB:', err);
+        process.exit(1);
+    });
+
+// Schéma pour la configuration du bot
+const configSchema = new mongoose.Schema({
+    botId: { type: String, default: 'main', unique: true, required: true },
+    welcomeMessage: { type: String, default: "🤖 Bienvenue {firstname} sur notre bot!\n\nUtilisez les boutons ci-dessous pour naviguer." },
+    welcomeImage: { type: String, default: null },
+    infoText: { type: String, default: "ℹ️ Informations\n\nCeci est la section d'informations du bot." },
+    miniApp: {
+        url: { type: String, default: null },
+        text: { type: String, default: "🎮 Mini Application" }
+    },
+    socialNetworks: [{
+        name: String,
+        url: String,
+        emoji: String
+    }],
+    socialButtonsPerRow: { type: Number, default: 3 },
+    lastModified: { type: Date, default: Date.now }
+}, { timestamps: true });
+
+const Config = mongoose.model('BotConfig', configSchema);
+
+// Configuration par défaut
 const defaultConfig = {
     botId: 'main',
     welcomeMessage: "🤖 Bienvenue {firstname} sur notre bot!\n\nUtilisez les boutons ci-dessous pour naviguer.",
@@ -19,144 +58,97 @@ const defaultConfig = {
     socialButtonsPerRow: 3
 };
 
-// Variable pour stocker la configuration actuelle
-let currentConfig = { ...defaultConfig };
-let mongoConnected = false;
-let Config = null;
-
-// Connexion MongoDB (non bloquante)
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://coffeelivraison4:FCiljtFGv5iKaKL3@pariscoffee.x0f0tsy.mongodb.net/?retryWrites=true&w=majority&appName=Pariscoffee';
-
-// Initialiser MongoDB en arrière-plan
-async function initMongoDB() {
-    try {
-        const mongoOptions = {
-            maxPoolSize: 10,
-            serverSelectionTimeoutMS: 5000,
-        };
-
-        await mongoose.connect(MONGODB_URI, mongoOptions);
-        console.log('✅ Connecté à MongoDB');
-        mongoConnected = true;
-
-        // Schéma pour la configuration du bot
-        const configSchema = new mongoose.Schema({
-            botId: { type: String, default: 'main', unique: true, required: true },
-            welcomeMessage: { type: String, default: defaultConfig.welcomeMessage },
-            welcomeImage: { type: String, default: null },
-            infoText: { type: String, default: defaultConfig.infoText },
-            miniApp: {
-                url: { type: String, default: null },
-                text: { type: String, default: "🎮 Mini Application" }
-            },
-            socialNetworks: [{
-                name: String,
-                url: String,
-                emoji: String
-            }],
-            socialButtonsPerRow: { type: Number, default: 3 },
-            lastModified: { type: Date, default: Date.now }
-        }, { timestamps: true });
-
-        // Vérifier si le modèle existe déjà
-        try {
-            Config = mongoose.model('BotConfig');
-        } catch (error) {
-            Config = mongoose.model('BotConfig', configSchema);
-        }
-
-        // Charger la configuration depuis MongoDB
-        const dbConfig = await Config.findOne({ botId: 'main' }).lean();
-        if (dbConfig) {
-            currentConfig = dbConfig;
-            console.log('✅ Configuration MongoDB chargée');
-        } else {
-            // Créer la configuration par défaut dans MongoDB
-            const newConfig = await Config.create(defaultConfig);
-            currentConfig = newConfig.toObject();
-            console.log('✅ Configuration par défaut créée dans MongoDB');
-        }
-    } catch (error) {
-        console.log('⚠️ MongoDB non disponible, utilisation de la config locale:', error.message);
-        mongoConnected = false;
-    }
-}
-
-// Lancer l'initialisation MongoDB sans bloquer
-initMongoDB().catch(console.error);
-
-// Charger la configuration (retourne toujours une config valide)
+// Charger la configuration depuis MongoDB
 async function loadConfig() {
-    // Si MongoDB est connecté, essayer de recharger
-    if (mongoConnected && Config) {
-        try {
-            const dbConfig = await Config.findOne({ botId: 'main' }).lean();
-            if (dbConfig) {
-                currentConfig = dbConfig;
-            }
-        } catch (error) {
-            console.error('⚠️ Erreur chargement MongoDB:', error.message);
+    try {
+        console.log('📖 Chargement de la configuration...');
+        let config = await Config.findOne({ botId: 'main' }).lean();
+        
+        if (!config) {
+            console.log('⚠️ Aucune configuration trouvée, création de la configuration par défaut...');
+            config = await Config.create(defaultConfig);
+            console.log('✅ Configuration par défaut créée');
+            return config.toObject();
         }
+        
+        console.log('✅ Configuration chargée:', {
+            welcomeMessage: config.welcomeMessage?.substring(0, 50) + '...',
+            welcomeImage: config.welcomeImage ? 'Définie' : 'Non définie',
+            socialNetworks: config.socialNetworks?.length || 0,
+            lastModified: config.lastModified
+        });
+        
+        return config;
+    } catch (error) {
+        console.error('❌ Erreur lors du chargement de la configuration:', error);
+        return defaultConfig;
     }
-    
-    // Toujours retourner la config actuelle (jamais null)
-    return currentConfig;
 }
 
-// Sauvegarder la configuration
+// Sauvegarder la configuration dans MongoDB
 async function saveConfig(configData) {
     try {
-        // Mettre à jour en mémoire
-        currentConfig = { ...currentConfig, ...configData };
+        console.log('💾 Sauvegarde de la configuration...');
         
-        // Si MongoDB est connecté, sauvegarder
-        if (mongoConnected && Config) {
-            const dataToSave = {
-                botId: 'main',
-                welcomeMessage: currentConfig.welcomeMessage,
-                welcomeImage: currentConfig.welcomeImage,
-                infoText: currentConfig.infoText,
-                miniApp: currentConfig.miniApp,
-                socialNetworks: currentConfig.socialNetworks,
-                socialButtonsPerRow: currentConfig.socialButtonsPerRow || 3,
-                lastModified: new Date()
-            };
-            
-            await Config.findOneAndUpdate(
-                { botId: 'main' },
-                { $set: dataToSave },
-                { 
-                    new: true, 
-                    upsert: true,
-                    runValidators: true
-                }
-            );
-            console.log('✅ Configuration sauvegardée dans MongoDB');
-        } else {
-            console.log('💾 Configuration sauvegardée en mémoire (MongoDB non disponible)');
-        }
+        // Nettoyer les données avant sauvegarde
+        const dataToSave = {
+            botId: 'main',
+            welcomeMessage: configData.welcomeMessage,
+            welcomeImage: configData.welcomeImage,
+            infoText: configData.infoText,
+            miniApp: configData.miniApp,
+            socialNetworks: configData.socialNetworks,
+            socialButtonsPerRow: configData.socialButtonsPerRow || 3,
+            lastModified: new Date()
+        };
+        
+        const config = await Config.findOneAndUpdate(
+            { botId: 'main' },
+            { $set: dataToSave },
+            { 
+                new: true, 
+                upsert: true,
+                runValidators: true
+            }
+        );
+        
+        console.log('✅ Configuration sauvegardée avec succès');
+        console.log('📝 Détails sauvegardés:', {
+            welcomeMessage: config.welcomeMessage?.substring(0, 50) + '...',
+            welcomeImage: config.welcomeImage ? 'Définie' : 'Non définie',
+            socialNetworks: config.socialNetworks?.length || 0
+        });
         
         return true;
     } catch (error) {
-        console.error('❌ Erreur lors de la sauvegarde:', error);
+        console.error('❌ Erreur lors de la sauvegarde de la configuration:', error);
         return false;
     }
 }
 
-// Obtenir l'URL d'une image
-function getImagePath(imageUrl) {
-    return imageUrl;
+// Réinitialiser la configuration (utile pour debug)
+async function resetConfig() {
+    try {
+        await Config.deleteOne({ botId: 'main' });
+        const newConfig = await Config.create(defaultConfig);
+        console.log('🔄 Configuration réinitialisée');
+        return newConfig.toObject();
+    } catch (error) {
+        console.error('❌ Erreur lors de la réinitialisation:', error);
+        return defaultConfig;
+    }
 }
 
-// Obtenir la configuration actuelle
-function getCurrentConfig() {
-    return currentConfig;
+// Obtenir l'URL d'une image (stockée dans Cloudinary ou base64)
+function getImagePath(imageUrl) {
+    return imageUrl; // Retourne directement l'URL ou file_id Telegram
 }
 
 module.exports = {
     loadConfig,
     saveConfig,
+    resetConfig,
     getImagePath,
-    getCurrentConfig,
-    IMAGES_DIR: null
+    Config, // Exporter le modèle pour debug si nécessaire
+    IMAGES_DIR: null // Plus utilisé avec MongoDB
 };
