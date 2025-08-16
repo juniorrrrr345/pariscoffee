@@ -967,63 +967,25 @@ bot.on('photo', async (msg) => {
             const photo = msg.photo[msg.photo.length - 1];
             const fileId = photo.file_id;
 
-            // Télécharger la photo
-            const file = await bot.getFile(fileId);
-            const filePath = file.file_path;
-            const downloadUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${filePath}`;
-
-            // Sauvegarder la photo
-            const fileName = `welcome_${Date.now()}.jpg`;
-            const localPath = path.join(IMAGES_DIR, fileName);
-
-            // Créer le dossier images s'il n'existe pas
-            fs.ensureDirSync(IMAGES_DIR);
-
-            const https = require('https');
-            const fileStream = fs.createWriteStream(localPath);
-
-            https.get(downloadUrl, (response) => {
-                response.pipe(fileStream);
-                fileStream.on('finish', async () => {
-                    fileStream.close();
-                    
-                    // Supprimer l'ancienne photo si elle existe
-                    if (config.welcomeImage) {
-                        const oldPath = getImagePath(config.welcomeImage);
-                        if (fs.existsSync(oldPath)) {
-                            try {
-                                fs.unlinkSync(oldPath);
-                            } catch (error) {
-                                console.error('Erreur lors de la suppression de l\'ancienne image:', error);
-                            }
-                        }
-                    }
-
-                    // Mettre à jour la configuration
-                    config.welcomeImage = fileName;
-                    await saveConfig(config);
-                    delete userStates[chatId];
-
-                    await sendNewMessage(chatId, 
-                        '✅ Image d\'accueil mise à jour avec succès !',
-                        { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
-                    );
-                });
-
-                fileStream.on('error', async (error) => {
-                    console.error('Erreur lors de l\'écriture du fichier:', error);
-                    await sendNewMessage(chatId, 
-                        '❌ Erreur lors de la sauvegarde de l\'image. Veuillez réessayer.',
-                        { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
-                    );
-                });
-            }).on('error', async (error) => {
-                console.error('Erreur lors du téléchargement de l\'image:', error);
+            // Avec MongoDB, on stocke directement le file_id de Telegram
+            // Pas besoin de télécharger l'image localement
+            
+            // Mettre à jour la configuration avec le file_id
+            config.welcomeImage = fileId;
+            const saved = await saveConfig(config);
+            
+            if (saved) {
+                delete userStates[chatId];
                 await sendNewMessage(chatId, 
-                    '❌ Erreur lors du téléchargement de l\'image. Veuillez réessayer.',
+                    '✅ Photo d\'accueil mise à jour avec succès !',
                     { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
                 );
-            });
+            } else {
+                await sendNewMessage(chatId, 
+                    '❌ Erreur lors de la sauvegarde de la photo. Veuillez réessayer.',
+                    { reply_markup: { inline_keyboard: [[{ text: '🔙 Retour', callback_data: 'admin_menu' }]] }}
+                );
+            }
         } catch (error) {
             console.error('Erreur lors du traitement de la photo:', error);
             await sendNewMessage(chatId, 
