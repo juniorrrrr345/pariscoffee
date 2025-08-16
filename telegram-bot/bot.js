@@ -60,6 +60,9 @@ let mongoose;
 let BotUser;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://coffeelivraison4:FCiljtFGv5iKaKL3@pariscoffee.x0f0tsy.mongodb.net/test?retryWrites=true&w=majority&appName=Pariscoffee';
 
+// Variable pour stocker la promesse de connexion MongoDB
+let mongoConnectionPromise = null;
+
 // Essayer de charger MongoDB, sinon utiliser les fichiers JSON
 try {
     mongoose = require('mongoose');
@@ -77,16 +80,44 @@ try {
     
     BotUser = mongoose.model('BotUser', botUserSchema);
     
-    // Connexion à MongoDB
-    mongoose.connect(MONGODB_URI)
-        .then(() => {
-            console.log('✅ Bot connecté à MongoDB');
-            loadUsersFromMongoDB();
-        })
-        .catch(err => {
-            console.error('⚠️ Erreur MongoDB, utilisation des fichiers JSON:', err.message);
-            loadUsersFromFiles();
-        });
+    // Connexion à MongoDB avec retry
+    const connectWithRetry = async () => {
+        const maxRetries = 5;
+        let retries = 0;
+        
+        while (retries < maxRetries) {
+            try {
+                await mongoose.connect(MONGODB_URI, {
+                    serverSelectionTimeoutMS: 10000,
+                    socketTimeoutMS: 45000,
+                });
+                console.log('✅ Bot connecté à MongoDB');
+                await loadUsersFromMongoDB();
+                // Recharger la configuration après connexion MongoDB
+                if (config) {
+                    console.log('🔄 Rechargement de la configuration depuis MongoDB...');
+                    config = await loadConfig();
+                    console.log('✅ Configuration rechargée depuis MongoDB');
+                }
+                return true;
+            } catch (err) {
+                retries++;
+                console.error(`⚠️ Tentative ${retries}/${maxRetries} échouée:`, err.message);
+                if (retries < maxRetries) {
+                    console.log(`⏳ Nouvelle tentative dans 3 secondes...`);
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                } else {
+                    console.error('❌ Impossible de se connecter à MongoDB après', maxRetries, 'tentatives');
+                    loadUsersFromFiles();
+                    return false;
+                }
+            }
+        }
+    };
+    
+    // Lancer la connexion MongoDB
+    mongoConnectionPromise = connectWithRetry();
+    
 } catch (error) {
     console.log('⚠️ MongoDB non disponible, utilisation des fichiers JSON');
     loadUsersFromFiles();
@@ -117,34 +148,52 @@ let config = null;
 
 // Fonction d'initialisation asynchrone de la configuration
 async function initializeConfig() {
-    // Attendre la connexion MongoDB si elle est en cours
-    if (mongoose && mongoose.connection.readyState === 0) {
-        console.log('⏳ Attente de la connexion MongoDB pour les configurations...');
-        await new Promise((resolve) => {
-            mongoose.connection.once('connected', resolve);
-            setTimeout(resolve, 5000); // Timeout de 5 secondes
-        });
+    console.log('🔧 Initialisation de la configuration...');
+    
+    // Attendre la connexion MongoDB si elle existe
+    if (mongoConnectionPromise) {
+        console.log('⏳ Attente de la connexion MongoDB...');
+        try {
+            const connected = await mongoConnectionPromise;
+            if (connected) {
+                console.log('✅ MongoDB connecté, chargement de la configuration...');
+            } else {
+                console.log('⚠️ MongoDB non disponible, utilisation du fallback...');
+            }
+        } catch (error) {
+            console.error('⚠️ Erreur lors de l\'attente MongoDB:', error.message);
+        }
     }
     
+    // Charger la configuration (MongoDB ou JSON)
     config = await loadConfig();
-    console.log('✅ Configuration initiale chargée');
     
-    // S'assurer que config n'est pas null
-    if (!config) {
+    if (config) {
+        console.log('✅ Configuration chargée avec succès');
+        console.log('📝 Message d\'accueil actuel:', config.welcomeMessage ? 
+            config.welcomeMessage.substring(0, 50) + '...' : 'Non défini');
+    } else {
         console.error('❌ Erreur: Configuration non chargée, utilisation de la config par défaut');
-        config = require('./config-mongodb').defaultConfig || {
-            welcomeMessage: "🤖 Bienvenue sur notre bot!",
-            welcomeImage: null,
-            infoText: "ℹ️ Informations",
-            miniApp: { url: null, text: "🎮 Mini Application" },
-            socialNetworks: [],
-            socialButtonsPerRow: 3
-        };
+        try {
+            const { defaultConfig } = require('./config-mongodb');
+            config = defaultConfig;
+        } catch (e) {
+            config = {
+                welcomeMessage: "🤖 Bienvenue sur notre bot!",
+                welcomeImage: null,
+                infoText: "ℹ️ Informations",
+                miniApp: { url: null, text: "🎮 Mini Application" },
+                socialNetworks: [],
+                socialButtonsPerRow: 3
+            };
+        }
     }
+    
+    return config;
 }
 
-// Initialiser la configuration au démarrage
-initializeConfig().catch(console.error);
+// Initialiser la configuration au démarrage et attendre qu'elle soit chargée
+const configPromise = initializeConfig().catch(console.error);
 
 // Fichiers JSON (fallback)
 const USERS_FILE = path.join(__dirname, 'users.json');
@@ -420,6 +469,11 @@ async function sendWelcomeMessage(chatId, editMessageId = null, userInfo = null)
 bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
+    
+    // Attendre que la configuration soit chargée
+    if (!config) {
+        await configPromise;
+    }
     
     // Ajouter l'utilisateur à la liste
     await saveUser(userId, { username: msg.from.username, firstName: msg.from.first_name, lastName: msg.from.last_name });

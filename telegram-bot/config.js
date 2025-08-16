@@ -10,8 +10,10 @@ fs.ensureDirSync(IMAGES_DIR);
 // Import des fonctions MongoDB pour les configurations
 let loadConfigFromMongoDB, saveConfigToMongoDB;
 let useMongoDBConfig = false;
+let mongoose = null;
 
 try {
+    mongoose = require('mongoose');
     const configMongoDB = require('./config-mongodb');
     loadConfigFromMongoDB = configMongoDB.loadConfigFromMongoDB;
     saveConfigToMongoDB = configMongoDB.saveConfigToMongoDB;
@@ -46,9 +48,34 @@ async function loadConfig() {
     try {
         // Essayer d'abord MongoDB si disponible
         if (useMongoDBConfig && loadConfigFromMongoDB) {
+            // Attendre que MongoDB soit connecté
+            if (mongoose && mongoose.connection.readyState !== 1) {
+                console.log('⏳ Attente de la connexion MongoDB pour charger la configuration...');
+                // Attendre jusqu'à 10 secondes pour la connexion
+                const maxWait = 10000;
+                const startTime = Date.now();
+                
+                while (mongoose.connection.readyState !== 1 && (Date.now() - startTime) < maxWait) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                if (mongoose.connection.readyState === 1) {
+                    console.log('✅ MongoDB connecté');
+                } else {
+                    console.log('⚠️ Timeout MongoDB, utilisation du fallback');
+                    throw new Error('MongoDB connection timeout');
+                }
+            }
+            
             console.log('📂 Chargement de la configuration depuis MongoDB...');
             currentConfig = await loadConfigFromMongoDB();
             console.log('✅ Configuration chargée depuis MongoDB');
+            console.log('📝 Config actuelle:', {
+                welcomeMessage: currentConfig.welcomeMessage ? 
+                    currentConfig.welcomeMessage.substring(0, 30) + '...' : 'Non défini',
+                socialNetworks: currentConfig.socialNetworks ? 
+                    currentConfig.socialNetworks.length + ' réseaux' : '0 réseaux'
+            });
             return currentConfig;
         }
     } catch (error) {
