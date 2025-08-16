@@ -99,7 +99,38 @@ const admins = new Set([ADMIN_ID]);
 const botStartTime = new Date();
 
 // Charger la configuration au démarrage
-let config = loadConfig();
+let config = null;
+
+// Fonction d'initialisation asynchrone de la configuration
+async function initializeConfig() {
+    // Attendre la connexion MongoDB si elle est en cours
+    if (mongoose && mongoose.connection.readyState === 0) {
+        console.log('⏳ Attente de la connexion MongoDB pour les configurations...');
+        await new Promise((resolve) => {
+            mongoose.connection.once('connected', resolve);
+            setTimeout(resolve, 5000); // Timeout de 5 secondes
+        });
+    }
+    
+    config = await loadConfig();
+    console.log('✅ Configuration initiale chargée');
+    
+    // S'assurer que config n'est pas null
+    if (!config) {
+        console.error('❌ Erreur: Configuration non chargée, utilisation de la config par défaut');
+        config = require('./config-mongodb').defaultConfig || {
+            welcomeMessage: "🤖 Bienvenue sur notre bot!",
+            welcomeImage: null,
+            infoText: "ℹ️ Informations",
+            miniApp: { url: null, text: "🎮 Mini Application" },
+            socialNetworks: [],
+            socialButtonsPerRow: 3
+        };
+    }
+}
+
+// Initialiser la configuration au démarrage
+initializeConfig().catch(console.error);
 
 // Fichiers JSON (fallback)
 const USERS_FILE = path.join(__dirname, 'users.json');
@@ -768,7 +799,7 @@ bot.on('callback_query', async (callbackQuery) => {
                     const index = parseInt(data.replace('admin_delete_social_', ''));
                     if (config.socialNetworks && config.socialNetworks[index]) {
                         config.socialNetworks.splice(index, 1);
-                        saveConfig(config);
+                        await saveConfig(config);
                         await bot.answerCallbackQuery(callbackQuery.id, {
                             text: '✅ Réseau social supprimé!',
                             show_alert: true
@@ -783,7 +814,7 @@ bot.on('callback_query', async (callbackQuery) => {
                 else if (data.startsWith('social_layout_')) {
                     const buttonsPerRow = parseInt(data.replace('social_layout_', ''));
                     config.socialButtonsPerRow = buttonsPerRow;
-                    saveConfig(config);
+                    await saveConfig(config);
                     await bot.answerCallbackQuery(callbackQuery.id, {
                         text: `✅ Disposition mise à jour: ${buttonsPerRow} bouton(s) par ligne`,
                         show_alert: true
@@ -861,7 +892,7 @@ bot.on('message', async (msg) => {
         switch (userState.action) {
             case 'editing_welcome':
                 config.welcomeMessage = msg.text;
-                saveConfig(config);
+                await saveConfig(config);
                 delete userStates[userId];
                 await updateMessage(chatId, userState.messageId, '✅ Message d\'accueil mis à jour!');
                 
@@ -875,7 +906,7 @@ bot.on('message', async (msg) => {
 
             case 'editing_info':
                 config.infoText = msg.text;
-                saveConfig(config);
+                await saveConfig(config);
                 delete userStates[userId];
                 await updateMessage(chatId, userState.messageId, '✅ Texte d\'informations mis à jour!');
                 
@@ -911,7 +942,7 @@ bot.on('message', async (msg) => {
                 } else {
                     config.miniApp.url = msg.text;
                 }
-                saveConfig(config);
+                await saveConfig(config);
                 delete userStates[userId];
                 await updateMessage(chatId, userState.messageId, '✅ Mini application mise à jour!', {
                     reply_markup: getAdminKeyboard()
@@ -958,7 +989,7 @@ bot.on('message', async (msg) => {
                     url: userState.socialUrl,
                     emoji: emoji
                 });
-                saveConfig(config);
+                await saveConfig(config);
                 delete userStates[userId];
                 await updateMessage(chatId, userState.messageId, '✅ Réseau social ajouté!', {
                     reply_markup: getSocialManageKeyboard(config)
@@ -1137,7 +1168,7 @@ bot.on('photo', async (msg) => {
 
                 // Mettre à jour la configuration
                 config.welcomeImage = fileName;
-                saveConfig(config);
+                await saveConfig(config);
                 delete userStates[userId];
 
                 await updateMessage(chatId, userState.messageId, '✅ Photo d\'accueil mise à jour!', {
