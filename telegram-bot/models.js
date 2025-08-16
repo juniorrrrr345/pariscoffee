@@ -32,7 +32,16 @@ const userSchema = new mongoose.Schema({
     lastSeen: { type: Date, default: Date.now }
 }, { timestamps: true });
 
+// Schéma pour les images
+const imageSchema = new mongoose.Schema({
+    fileId: { type: String, required: true },
+    fileName: String,
+    type: { type: String, default: 'welcome' },
+    uploadedAt: { type: Date, default: Date.now }
+}, { timestamps: true });
+
 const Config = mongoose.model('Config', configSchema);
 const User = mongoose.model('User', userSchema);
+const Image = mongoose.model('Image', imageSchema);
 
-module.exports = { Config, User };
+module.exports = { Config, User, Image };
