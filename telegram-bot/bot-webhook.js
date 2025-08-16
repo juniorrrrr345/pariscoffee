@@ -55,6 +55,7 @@ app.get('/health', (req, res) => {
 let mongoose;
 let BotUser;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://coffeelivraison4:FCiljtFGv5iKaKL3@pariscoffee.x0f0tsy.mongodb.net/test?retryWrites=true&w=majority&appName=Pariscoffee';
+let mongoConnectionPromise = null;
 
 // Essayer de charger MongoDB, sinon utiliser les fichiers JSON
 try {
@@ -73,24 +74,75 @@ try {
     
     BotUser = mongoose.model('BotUser', botUserSchema);
     
-    // Connexion à MongoDB
-    mongoose.connect(MONGODB_URI)
-        .then(() => {
-            console.log('✅ Bot connecté à MongoDB');
-            loadUsersFromMongoDB();
-        })
-        .catch(err => {
-            console.error('⚠️ Erreur MongoDB, utilisation des fichiers JSON:', err.message);
-            loadUsersFromFiles();
-        });
+    // Connexion à MongoDB avec retry
+    const connectWithRetry = async () => {
+        const maxRetries = 5;
+        let retries = 0;
+        
+        while (retries < maxRetries) {
+            try {
+                await mongoose.connect(MONGODB_URI, {
+                    serverSelectionTimeoutMS: 10000,
+                    socketTimeoutMS: 45000,
+                });
+                console.log('✅ Bot connecté à MongoDB');
+                await loadUsersFromMongoDB();
+                // Recharger la configuration après connexion MongoDB
+                if (config === null) {
+                    console.log('🔄 Chargement de la configuration depuis MongoDB...');
+                    await initializeConfig();
+                }
+                return true;
+            } catch (err) {
+                retries++;
+                console.error(`⚠️ Tentative ${retries}/${maxRetries} échouée:`, err.message);
+                if (retries < maxRetries) {
+                    console.log(`⏳ Nouvelle tentative dans 3 secondes...`);
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                } else {
+                    console.error('❌ Impossible de se connecter à MongoDB après', maxRetries, 'tentatives');
+                    loadUsersFromFiles();
+                    return false;
+                }
+            }
+        }
+    };
+    
+    // Lancer la connexion MongoDB
+    mongoConnectionPromise = connectWithRetry();
+    
 } catch (error) {
     console.log('⚠️ MongoDB non installé, utilisation des fichiers JSON');
+    loadUsersFromFiles();
 }
 
 // État des utilisateurs et configuration
 const userStates = {};
 const activeMessages = {};
-let config = loadConfig();
+let config = null;
+
+// Charger la configuration de manière asynchrone
+async function initializeConfig() {
+    // Attendre la connexion MongoDB si elle existe
+    if (mongoConnectionPromise) {
+        console.log('⏳ Attente de la connexion MongoDB pour la configuration...');
+        try {
+            await mongoConnectionPromise;
+        } catch (error) {
+            console.error('⚠️ Erreur MongoDB:', error.message);
+        }
+    }
+    
+    config = await loadConfig();
+    console.log('✅ Configuration initiale chargée');
+    if (config && config.welcomeMessage) {
+        console.log('📝 Message d\'accueil actuel:', config.welcomeMessage.substring(0, 50) + '...');
+    }
+    return config;
+}
+
+// Promesse pour la configuration
+const configPromise = initializeConfig().catch(console.error);
 
 // Gestion des utilisateurs et admins
 const users = new Set();
@@ -294,6 +346,11 @@ async function sendWelcomeMessage(chatId, editMessageId = null, userInfo = null)
 bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
+    
+    // Attendre que la configuration soit chargée
+    if (!config) {
+        await configPromise;
+    }
     
     // Sauvegarder l'utilisateur
     await saveUserToMongoDB(userId, {
@@ -616,7 +673,7 @@ bot.on('callback_query', async (callbackQuery) => {
                     if (!admins.has(userId)) return;
                     const layout = parseInt(data.split('_')[2]);
                     config.socialButtonsPerRow = layout;
-                    saveConfig(config);
+                    await saveConfig(config);
                     await updateMessage(chatId, messageId, `✅ Disposition mise à jour: ${layout} bouton(s) par ligne`, {
                         reply_markup: getSocialManageKeyboard(config)
                     });
@@ -625,7 +682,7 @@ bot.on('callback_query', async (callbackQuery) => {
                     const index = parseInt(data.split('_')[3]);
                     if (config.socialNetworks && config.socialNetworks[index]) {
                         const removed = config.socialNetworks.splice(index, 1)[0];
-                        saveConfig(config);
+                        await saveConfig(config);
                         await updateMessage(chatId, messageId, `✅ "${removed.name}" supprimé!`, {
                             reply_markup: getSocialManageKeyboard(config)
                         });
@@ -710,7 +767,7 @@ bot.on('message', async (msg) => {
             if (!admins.has(userId)) return;
             if (msg.text) {
                 config.welcomeMessage = msg.text;
-                saveConfig(config);
+                await saveConfig(config);
                 delete userStates[chatId];
                 await sendNewMessage(chatId, 
                     '✅ Message d\'accueil mis à jour avec succès !',
@@ -723,7 +780,7 @@ bot.on('message', async (msg) => {
             if (!admins.has(userId)) return;
             if (msg.text) {
                 config.infoText = msg.text;
-                saveConfig(config);
+                await saveConfig(config);
                 delete userStates[chatId];
                 await sendNewMessage(chatId, 
                     '✅ Informations mises à jour avec succès !',
@@ -751,7 +808,7 @@ bot.on('message', async (msg) => {
             if (msg.text) {
                 if (!config.miniApp) config.miniApp = {};
                 config.miniApp.url = msg.text;
-                saveConfig(config);
+                await saveConfig(config);
                 delete userStates[chatId];
                 await sendNewMessage(chatId, 
                     '✅ Mini application configurée avec succès !',
@@ -803,7 +860,7 @@ bot.on('message', async (msg) => {
                     url: state.socialUrl,
                     icon: icon
                 });
-                saveConfig(config);
+                await saveConfig(config);
                 delete userStates[chatId];
                 await sendNewMessage(chatId, 
                     `✅ ${state.socialName} a été ajouté avec succès !`,
@@ -816,7 +873,7 @@ bot.on('message', async (msg) => {
             if (!admins.has(userId)) return;
             if (msg.text) {
                 config.socialNetworks[state.socialIndex].url = msg.text;
-                saveConfig(config);
+                await saveConfig(config);
                 userStates[chatId] = { 
                     action: 'editing_social_icon', 
                     socialIndex: state.socialIndex 
@@ -835,7 +892,7 @@ bot.on('message', async (msg) => {
                 if (msg.text) {
                     config.socialNetworks[state.socialIndex].icon = msg.text;
                 }
-                saveConfig(config);
+                await saveConfig(config);
                 delete userStates[chatId];
                 await sendNewMessage(chatId, 
                     `✅ ${config.socialNetworks[state.socialIndex].name} a été mis à jour avec succès !`,
@@ -928,7 +985,7 @@ bot.on('photo', async (msg) => {
 
                     // Mettre à jour la configuration
                     config.welcomeImage = fileName;
-                    saveConfig(config);
+                    await saveConfig(config);
                     delete userStates[chatId];
 
                     await sendNewMessage(chatId, 
