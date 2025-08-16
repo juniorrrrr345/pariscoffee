@@ -134,8 +134,22 @@ async function initializeConfig() {
     }
     
     config = await loadConfig();
+    
+    // S'assurer que config n'est jamais null
+    if (!config) {
+        console.error('❌ Configuration non chargée, utilisation de la config par défaut');
+        config = {
+            welcomeMessage: "🤖 Bienvenue sur notre bot!",
+            welcomeImage: null,
+            infoText: "ℹ️ Informations",
+            miniApp: { url: null, text: "🎮 Mini Application" },
+            socialNetworks: [],
+            socialButtonsPerRow: 3
+        };
+    }
+    
     console.log('✅ Configuration initiale chargée');
-    if (config && config.welcomeMessage) {
+    if (config.welcomeMessage) {
         console.log('📝 Message d\'accueil actuel:', config.welcomeMessage.substring(0, 50) + '...');
     }
     return config;
@@ -388,6 +402,20 @@ bot.on('callback_query', async (callbackQuery) => {
     const messageId = callbackQuery.message.message_id;
     const userId = callbackQuery.from.id;
     const data = callbackQuery.data;
+
+    // Attendre que la configuration soit chargée
+    if (!config) {
+        try {
+            await configPromise;
+        } catch (error) {
+            console.error('Erreur lors du chargement de la configuration:', error);
+            await bot.answerCallbackQuery(callbackQuery.id, {
+                text: '⚠️ Le bot est en cours d\'initialisation. Veuillez réessayer.',
+                show_alert: true
+            });
+            return;
+        }
+    }
 
     // Répondre immédiatement au callback pour éviter l'erreur de timeout
     try {
@@ -761,6 +789,17 @@ bot.on('message', async (msg) => {
 
     if (!state) return;
 
+    // Attendre que la configuration soit chargée
+    if (!config) {
+        try {
+            await configPromise;
+        } catch (error) {
+            console.error('Erreur lors du chargement de la configuration:', error);
+            await bot.sendMessage(chatId, '⚠️ Le bot est en cours d\'initialisation. Veuillez réessayer dans quelques secondes.');
+            return;
+        }
+    }
+
     // Gestion selon l'état de l'utilisateur
     switch(state.action) {
         case 'editing_welcome':
@@ -942,6 +981,17 @@ bot.on('photo', async (msg) => {
     const state = userStates[chatId];
 
     if (!state) return;
+
+    // Attendre que la configuration soit chargée
+    if (!config) {
+        try {
+            await configPromise;
+        } catch (error) {
+            console.error('Erreur lors du chargement de la configuration:', error);
+            await bot.sendMessage(chatId, '⚠️ Le bot est en cours d\'initialisation. Veuillez réessayer dans quelques secondes.');
+            return;
+        }
+    }
 
     if (state.action === 'editing_welcome_image') {
         if (!admins.has(userId)) return;
