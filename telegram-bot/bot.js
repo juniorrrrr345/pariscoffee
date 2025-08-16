@@ -18,14 +18,28 @@ function encodeMessage(text) {
     return text;
 }
 
+// Fonction pour échapper les caractères HTML si nécessaire
+function escapeHtml(text) {
+    if (!text) return '';
+    // Échapper seulement les caractères HTML critiques
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
 // Fonction pour préparer les options de message avec le bon encodage
-function prepareMessageOptions(options = {}) {
-    // Forcer l'utilisation d'UTF-8 pour tous les messages
+function prepareMessageOptions(options = {}, useHtml = false) {
+    // Si useHtml est false, ne pas utiliser parse_mode pour éviter les problèmes
     const defaultOptions = {
-        parse_mode: 'HTML', // HTML parse mode gère mieux les caractères spéciaux
         disable_web_page_preview: false,
         ...options
     };
+    
+    // Ajouter parse_mode seulement si explicitement demandé
+    if (useHtml) {
+        defaultOptions.parse_mode = 'HTML';
+    }
     
     return defaultOptions;
 }
@@ -275,18 +289,26 @@ async function sendNewMessage(chatId, text, options = {}) {
     // Supprimer l'ancien message actif
     await deleteActiveMessage(chatId);
     
-    // Encoder le message pour gérer les caractères spéciaux et emojis
-    const encodedText = encodeMessage(text);
-    const messageOptions = prepareMessageOptions(options);
-    
-    // Envoyer le nouveau message
+    // Envoyer le nouveau message (sans forcer HTML parse mode)
     try {
-        const message = await bot.sendMessage(chatId, encodedText, messageOptions);
+        const message = await bot.sendMessage(chatId, text, options);
         activeMessages[chatId] = message.message_id;
         return message;
     } catch (error) {
         console.error('Erreur lors de l\'envoi du message:', error);
         console.error('Message qui a causé l\'erreur:', text);
+        // Réessayer sans parse_mode si l'erreur est liée au HTML
+        if (error.message && error.message.includes('parse')) {
+            try {
+                const fallbackOptions = { ...options };
+                delete fallbackOptions.parse_mode;
+                const message = await bot.sendMessage(chatId, text, fallbackOptions);
+                activeMessages[chatId] = message.message_id;
+                return message;
+            } catch (retryError) {
+                console.error('Erreur lors du réessai:', retryError);
+            }
+        }
     }
 }
 
@@ -308,16 +330,12 @@ async function sendNewPhoto(chatId, photo, options = {}) {
 // Fonction pour éditer le message actif ou en envoyer un nouveau
 async function updateMessage(chatId, messageId, text, options = {}) {
     try {
-        // Encoder le message pour gérer les caractères spéciaux et emojis
-        const encodedText = encodeMessage(text);
-        const messageOptions = prepareMessageOptions(options);
-        
         // Vérifier si c'est bien le message actif
         if (activeMessages[chatId] === messageId) {
-            await bot.editMessageText(encodedText, {
+            await bot.editMessageText(text, {
                 chat_id: chatId,
                 message_id: messageId,
-                ...messageOptions
+                ...options
             });
             return { message_id: messageId };
         } else {
@@ -325,6 +343,24 @@ async function updateMessage(chatId, messageId, text, options = {}) {
             return await sendNewMessage(chatId, text, options);
         }
     } catch (error) {
+        // En cas d'erreur avec parse_mode, réessayer sans
+        if (error.message && error.message.includes('parse') && options.parse_mode) {
+            try {
+                const fallbackOptions = { ...options };
+                delete fallbackOptions.parse_mode;
+                
+                if (activeMessages[chatId] === messageId) {
+                    await bot.editMessageText(text, {
+                        chat_id: chatId,
+                        message_id: messageId,
+                        ...fallbackOptions
+                    });
+                    return { message_id: messageId };
+                }
+            } catch (retryError) {
+                console.error('Erreur lors du réessai sans parse_mode:', retryError);
+            }
+        }
         // En cas d'erreur, envoyer un nouveau message
         return await sendNewMessage(chatId, text, options);
     }
@@ -1000,12 +1036,17 @@ bot.on('message', async (msg) => {
                 const message = msg.text;
                 let successCount = 0;
                 let failCount = 0;
+                let errorDetails = [];
                 
                 await updateMessage(chatId, userState.messageId, '📤 Envoi en cours...');
                 
-                // Encoder le message pour gérer les caractères spéciaux et emojis
-                const broadcastText = encodeMessage(`📢 Message de l'administrateur:\n\n${message}`);
-                const broadcastOptions = prepareMessageOptions();
+                // Préparer le message pour la diffusion (sans HTML parse mode pour éviter les erreurs)
+                const broadcastText = `📢 Message de l'administrateur:\n\n${message}`;
+                
+                // Ne pas utiliser parse_mode pour éviter les problèmes avec les caractères spéciaux
+                const broadcastOptions = {
+                    disable_web_page_preview: false
+                };
                 
                 for (const targetUserId of users) {
                     if (!admins.has(targetUserId)) { // Ne pas envoyer aux admins
@@ -1015,14 +1056,26 @@ bot.on('message', async (msg) => {
                         } catch (error) {
                             failCount++;
                             console.error(`Erreur envoi à ${targetUserId}:`, error.message);
+                            // Collecter les détails d'erreur pour le débogage
+                            if (errorDetails.length < 5) {
+                                errorDetails.push(`User ${targetUserId}: ${error.message}`);
+                            }
                         }
                     }
                 }
                 
                 const totalUsersBroadcast = users.size - admins.size; // Exclure tous les admins
                 delete userStates[userId];
-                await updateMessage(chatId, userState.messageId, 
-                    `✅ Message diffusé!\n\n📊 Statistiques:\n👥 Utilisateurs totaux: ${totalUsersBroadcast}\n✅ Envoyés: ${successCount}\n❌ Échecs: ${failCount}`, {
+                
+                // Préparer le message de résultat
+                let resultMessage = `✅ Message diffusé!\n\n📊 Statistiques:\n👥 Utilisateurs totaux: ${totalUsersBroadcast}\n✅ Envoyés: ${successCount}\n❌ Échecs: ${failCount}`;
+                
+                // Ajouter les détails d'erreur si nécessaire
+                if (errorDetails.length > 0) {
+                    resultMessage += `\n\n⚠️ Détails des erreurs:\n${errorDetails.join('\n')}`;
+                }
+                
+                await updateMessage(chatId, userState.messageId, resultMessage, {
                     reply_markup: getAdminKeyboard()
                 });
                 break;
