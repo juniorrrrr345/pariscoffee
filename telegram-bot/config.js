@@ -31,8 +31,6 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://coffeelivraison4:F
 async function initMongoDB() {
     try {
         const mongoOptions = {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
             maxPoolSize: 10,
             serverSelectionTimeoutMS: 5000,
         };
@@ -60,7 +58,12 @@ async function initMongoDB() {
             lastModified: { type: Date, default: Date.now }
         }, { timestamps: true });
 
-        Config = mongoose.model('BotConfig', configSchema);
+        // Vérifier si le modèle existe déjà
+        try {
+            Config = mongoose.model('BotConfig');
+        } catch (error) {
+            Config = mongoose.model('BotConfig', configSchema);
+        }
 
         // Charger la configuration depuis MongoDB
         const dbConfig = await Config.findOne({ botId: 'main' }).lean();
